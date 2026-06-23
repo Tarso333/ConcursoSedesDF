@@ -1,0 +1,16 @@
+node_modules/
+dist/
+out/
+build/
+release/
+*.log
+*.tsbuildinfo
+.DS_Store
+.claude/
+.env
+.env.local
+*.local
+# SQLite local de desenvolvimento
+*.db
+*.db-journal
+*.sqlite

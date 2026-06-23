@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --surface: 0 0% 100%;
+    --foreground: 222 47% 14%;
+    --muted: 210 30% 94%;
+    --muted-foreground: 215 16% 42%;
+    --border: 214 25% 88%;
+    --input: 214 25% 86%;
+    --ring: 245 75% 60%;
+    --primary: 245 70% 58%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 160 84% 36%;
+    --accent-foreground: 0 0% 100%;
+    --success: 152 60% 38%;
+    --warning: 32 95% 44%;
+    --danger: 0 72% 50%;
+    --radius: 0.85rem;
+  }
+
+  .dark {
+    --background: 222 47% 8%;
+    --surface: 222 40% 12%;
+    --foreground: 210 40% 96%;
+    --muted: 222 25% 18%;
+    --muted-foreground: 215 20% 65%;
+    --border: 222 22% 20%;
+    --input: 222 22% 22%;
+    --ring: 245 80% 66%;
+    --primary: 245 75% 64%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 160 84% 42%;
+    --accent-foreground: 222 47% 8%;
+    --success: 152 64% 45%;
+    --warning: 38 92% 55%;
+    --danger: 0 72% 58%;
+    --radius: 0.85rem;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: Inter, 'Segoe UI', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted));
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.6);
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-lg border bg-surface shadow-sm;
+  }
+  .stat-label {
+    @apply text-xs font-medium uppercase tracking-wide text-muted-foreground;
+  }
+}
