@@ -39,6 +39,7 @@ export const questions = sqliteTable('questions', {
   source: text('source'),
   year: integer('year'),
   board: text('board').notNull().default('Quadrix'),
+  seedKey: text('seed_key'),
   createdAt: createdAt()
 })
 

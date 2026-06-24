@@ -1,4 +1,4 @@
-import { and, count, eq } from 'drizzle-orm'
+import { and, count, eq, isNull } from 'drizzle-orm'
 import type { DB } from '../connection'
 import {
   disciplines,
@@ -9,7 +9,10 @@ import {
   topics
 } from '../schema'
 import { CURRICULUM } from './curriculum'
-import { SEED_QUESTIONS } from './questions'
+import { type SeedQuestion, SEED_QUESTIONS } from './questions'
+import { SEED_QUESTIONS_BANK } from './questionsBank'
+
+const ALL_QUESTIONS: SeedQuestion[] = [...SEED_QUESTIONS, ...SEED_QUESTIONS_BANK]
 
 function slugify(input: string): string {
   return input
@@ -19,6 +22,20 @@ function slugify(input: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '')
     .slice(0, 60)
+}
+
+// Hash determinístico (FNV-1a) para gerar uma chave estável por questão.
+function fnv1a(str: string): string {
+  let h = 0x811c9dc5
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i)
+    h = Math.imul(h, 0x01000193)
+  }
+  return (h >>> 0).toString(16)
+}
+
+function seedKeyFor(q: SeedQuestion): string {
+  return `${q.disciplineSlug}-${fnv1a(q.statement)}`
 }
 
 /** Popula o banco de forma idempotente: só insere o que ainda não existe. */
@@ -53,54 +70,71 @@ export function runSeed(db: DB): void {
     })
   }
 
-  // Banco de questões inicial.
-  const qCount = db.select({ c: count() }).from(questions).get()
-  if (!qCount || qCount.c === 0) {
-    for (const q of SEED_QUESTIONS) {
-      const disc = db
-        .select({ id: disciplines.id })
-        .from(disciplines)
-        .where(eq(disciplines.slug, q.disciplineSlug))
+  // Banco de questões — idempotente por seed_key (permite ampliar em updates
+  // futuros sem duplicar nem apagar respostas já registradas).
+  for (const q of ALL_QUESTIONS) {
+    const disc = db
+      .select({ id: disciplines.id })
+      .from(disciplines)
+      .where(eq(disciplines.slug, q.disciplineSlug))
+      .get()
+    if (!disc) continue
+
+    const key = seedKeyFor(q)
+
+    // Já semeada?
+    const existing = db.select({ id: questions.id }).from(questions).where(eq(questions.seedKey, key)).get()
+    if (existing) continue
+
+    // Adota uma questão legada (mesmo enunciado, sem seed_key) — evita duplicar
+    // as questões inseridas antes da coluna seed_key existir.
+    const legacy = db
+      .select({ id: questions.id })
+      .from(questions)
+      .where(and(eq(questions.statement, q.statement), isNull(questions.seedKey)))
+      .get()
+    if (legacy) {
+      db.update(questions).set({ seedKey: key }).where(eq(questions.id, legacy.id)).run()
+      continue
+    }
+
+    let topicId: number | null = null
+    if (q.topic) {
+      const t = db
+        .select({ id: topics.id })
+        .from(topics)
+        .where(and(eq(topics.disciplineId, disc.id), eq(topics.name, q.topic)))
         .get()
-      if (!disc) continue
+      topicId = t?.id ?? null
+    }
 
-      let topicId: number | null = null
-      if (q.topic) {
-        const t = db
-          .select({ id: topics.id })
-          .from(topics)
-          .where(and(eq(topics.disciplineId, disc.id), eq(topics.name, q.topic)))
-          .get()
-        topicId = t?.id ?? null
-      }
+    const qres = db
+      .insert(questions)
+      .values({
+        disciplineId: disc.id,
+        topicId,
+        type: q.type,
+        statement: q.statement,
+        difficulty: q.difficulty,
+        explanation: q.explanation,
+        source: q.source ?? 'Questão de estudo (seed)',
+        year: q.year ?? null,
+        seedKey: key
+      })
+      .run()
+    const questionId = Number(qres.lastInsertRowid)
 
-      const qres = db
-        .insert(questions)
+    q.options.forEach((opt, oi) => {
+      const letter = q.type === 'CE' ? (oi === 0 ? 'C' : 'E') : String.fromCharCode(65 + oi)
+      db.insert(questionOptions)
         .values({
-          disciplineId: disc.id,
-          topicId,
-          type: q.type,
-          statement: q.statement,
-          difficulty: q.difficulty,
-          explanation: q.explanation,
-          source: q.source ?? 'Questão de estudo (seed)',
-          year: q.year ?? null
+          questionId,
+          letter,
+          text: opt.text,
+          isCorrect: Boolean(opt.correct),
+          orderIndex: oi
         })
         .run()
-      const questionId = Number(qres.lastInsertRowid)
-
-      q.options.forEach((opt, oi) => {
-        const letter = q.type === 'CE' ? (oi === 0 ? 'C' : 'E') : String.fromCharCode(65 + oi)
-        db.insert(questionOptions)
-          .values({
-            questionId,
-            letter,
-            text: opt.text,
-            isCorrect: Boolean(opt.correct),
-            orderIndex: oi
-          })
-          .run()
-      })
-    }
+    })
   }
 }

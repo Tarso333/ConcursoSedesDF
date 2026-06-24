@@ -255,9 +255,15 @@ CREATE TABLE IF NOT EXISTS question_states (
 );
 `
 
+const MIGRATION_0003_SEED_KEY = /* sql */ `
+ALTER TABLE questions ADD COLUMN seed_key TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_questions_seed_key ON questions(seed_key) WHERE seed_key IS NOT NULL;
+`
+
 const MIGRATIONS: Migration[] = [
   { version: 1, name: 'init', up: MIGRATION_0001_INIT },
-  { version: 2, name: 'question_states', up: MIGRATION_0002_QUESTION_STATES }
+  { version: 2, name: 'question_states', up: MIGRATION_0002_QUESTION_STATES },
+  { version: 3, name: 'question_seed_key', up: MIGRATION_0003_SEED_KEY }
 ]
 
 export function runMigrations(sqlite: Database.Database): void {
