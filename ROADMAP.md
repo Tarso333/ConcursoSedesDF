@@ -40,8 +40,9 @@ CRUD de decks/cards; **geração automática a partir do caderno de erros**; mod
 `ts-fsrs` integrado; `srs_cards`/`srs_reviews`; fila de vencidos; avaliação Errei/Difícil/Bom/Fácil agenda a próxima data; stats (vencendo agora, revisados hoje, total). Datas em formato compatível com `datetime('now')`.
 **Verificado:** typecheck (node+web) + build verdes; boot OK.
 
-### M7 — Simulados Inteligentes ⬜
-Gerar simulados (geral, por disciplina/tópico, por dificuldade); **modo oficial Quadrix** (60q, peso 2 nos específicos, cronometrado, corte de eliminação); modo livre; resultado detalhado + histórico.
+### M7 — Simulados Inteligentes ✅ (concluído 2026-06-23)
+Modos OFICIAL (20 gerais + 40 específicos, cronômetro 3h, **corte de eliminação 50%/50%**), por disciplina e personalizado; navegação por grade de questões; correção ponderada (pesos 1/2); resultado por bloco + por disciplina + gabarito comentado; histórico clicável. Respostas alimentam dashboard e caderno de erros.
+**Verificado:** typecheck (node+web) + build verdes.
 
 ---
 

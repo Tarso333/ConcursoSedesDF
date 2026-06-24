@@ -6,7 +6,8 @@ import { Dashboard } from './routes/Dashboard'
 import { Flashcards } from './routes/Flashcards'
 import { Questoes } from './routes/Questoes'
 import { Revisao } from './routes/Revisao'
-import { Estatisticas, Metas, ModoAprovacao, Planejamento, Simulados, TutorIA } from './routes/stubs'
+import { Simulados } from './routes/Simulados'
+import { Estatisticas, Metas, ModoAprovacao, Planejamento, TutorIA } from './routes/stubs'
 
 export default function App(): JSX.Element {
   return (

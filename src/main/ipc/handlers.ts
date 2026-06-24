@@ -5,6 +5,8 @@ import type {
   ErrorFilter,
   ErrorType,
   FlashcardInput,
+  MockAnswerInput,
+  MockExamConfig,
   QuestionFilter,
   ReviewRating
 } from '@shared/domain'
@@ -39,6 +41,12 @@ import {
 import { getSettings, updateSettings } from '../repositories/settingsRepository'
 import { getDashboardOverview } from '../services/dashboardService'
 import { getDueCards, getReviewStats, rateCard } from '../services/reviewService'
+import {
+  createMockExam,
+  finishMockExam,
+  getMockHistory,
+  getMockResult
+} from '../services/simuladoService'
 
 export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.appGetInfo, () => ({
@@ -86,4 +94,12 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.reviewRate, (_e, srsCardId: number, rating: ReviewRating) =>
     rateCard(srsCardId, rating)
   )
+
+  // Simulados (M7)
+  ipcMain.handle(IPC.simCreate, (_e, config: MockExamConfig) => createMockExam(config))
+  ipcMain.handle(IPC.simFinish, (_e, examId: number, ans: MockAnswerInput[]) =>
+    finishMockExam(examId, ans)
+  )
+  ipcMain.handle(IPC.simHistory, () => getMockHistory())
+  ipcMain.handle(IPC.simResult, (_e, examId: number) => getMockResult(examId))
 }

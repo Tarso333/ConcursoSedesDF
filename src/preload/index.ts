@@ -5,6 +5,8 @@ import type {
   ErrorFilter,
   ErrorType,
   FlashcardInput,
+  MockAnswerInput,
+  MockExamConfig,
   QuestionFilter,
   ReviewRating
 } from '@shared/domain'
@@ -39,7 +41,12 @@ const api: AppApi = {
   getDueCards: (limit: number) => ipcRenderer.invoke(IPC.reviewDue, limit),
   getReviewStats: () => ipcRenderer.invoke(IPC.reviewStats),
   rateCard: (srsCardId: number, rating: ReviewRating) =>
-    ipcRenderer.invoke(IPC.reviewRate, srsCardId, rating)
+    ipcRenderer.invoke(IPC.reviewRate, srsCardId, rating),
+  createMockExam: (config: MockExamConfig) => ipcRenderer.invoke(IPC.simCreate, config),
+  finishMockExam: (examId: number, ans: MockAnswerInput[]) =>
+    ipcRenderer.invoke(IPC.simFinish, examId, ans),
+  getMockHistory: () => ipcRenderer.invoke(IPC.simHistory),
+  getMockResult: (examId: number) => ipcRenderer.invoke(IPC.simResult, examId)
 }
 
 if (process.contextIsolated) {

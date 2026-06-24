@@ -183,6 +183,92 @@ export interface ReviewStats {
   total: number
 }
 
+// ───────── Simulados (M7) ─────────
+export interface MockExamConfig {
+  mode: MockExamMode
+  disciplineId?: number | null
+  totalQuestions?: number
+}
+
+export interface SimOption {
+  id: number
+  letter: string
+  text: string
+}
+
+export interface SimQuestion {
+  itemId: number
+  questionId: number
+  type: QuestionType
+  difficulty: Difficulty
+  statement: string
+  disciplineId: number
+  disciplineName: string
+  disciplineColor: string
+  block: DisciplineBlock
+  options: SimOption[]
+}
+
+export interface MockExamSession {
+  examId: number
+  title: string
+  mode: MockExamMode
+  timeLimitSec: number | null
+  questions: SimQuestion[]
+}
+
+export interface MockAnswerInput {
+  itemId: number
+  selectedOptionId: number | null
+  timeMs: number
+}
+
+export interface MockResultItem {
+  questionId: number
+  disciplineName: string
+  statement: string
+  correct: boolean
+  answered: boolean
+  selectedOptionId: number | null
+  correctOptionId: number
+  explanation: string | null
+}
+
+export interface MockDisciplineScore {
+  name: string
+  color: string
+  correct: number
+  total: number
+}
+
+export interface MockExamResult {
+  examId: number
+  title: string
+  mode: MockExamMode
+  totalQuestions: number
+  answered: number
+  correct: number
+  scorePoints: number
+  maxPoints: number
+  scorePct: number
+  geralPoints: number
+  geralMax: number
+  espPoints: number
+  espMax: number
+  eliminated: boolean
+  byDiscipline: MockDisciplineScore[]
+  items: MockResultItem[]
+}
+
+export interface MockHistoryItem {
+  id: number
+  title: string
+  mode: MockExamMode
+  totalQuestions: number
+  scorePct: number
+  finishedAt: string | null
+}
+
 export interface Settings {
   userName: string
   theme: ThemeMode

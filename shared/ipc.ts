@@ -15,6 +15,11 @@ import type {
   ErrorType,
   Flashcard,
   FlashcardInput,
+  MockAnswerInput,
+  MockExamConfig,
+  MockExamResult,
+  MockExamSession,
+  MockHistoryItem,
   QuestionFilter,
   QuestionForPractice,
   ReviewRating,
@@ -51,7 +56,11 @@ export const IPC = {
   flashcardsGenerateFromErrors: 'flashcards:generateFromErrors',
   reviewDue: 'review:due',
   reviewStats: 'review:stats',
-  reviewRate: 'review:rate'
+  reviewRate: 'review:rate',
+  simCreate: 'sim:create',
+  simFinish: 'sim:finish',
+  simHistory: 'sim:history',
+  simResult: 'sim:result'
 } as const
 
 export interface SettingsUpdateInput {
@@ -95,4 +104,9 @@ export interface AppApi {
   getDueCards(limit: number): Promise<DueCard[]>
   getReviewStats(): Promise<ReviewStats>
   rateCard(srsCardId: number, rating: ReviewRating): Promise<ReviewResult>
+  // Simulados (M7)
+  createMockExam(config: MockExamConfig): Promise<MockExamSession>
+  finishMockExam(examId: number, answers: MockAnswerInput[]): Promise<MockExamResult>
+  getMockHistory(): Promise<MockHistoryItem[]>
+  getMockResult(examId: number): Promise<MockExamResult>
 }

@@ -1,24 +1,5 @@
-import { BarChart3, CalendarRange, ClipboardCheck, Rocket, Sparkles, Target } from 'lucide-react'
+import { BarChart3, CalendarRange, Rocket, Sparkles, Target } from 'lucide-react'
 import { ComingSoon } from '../components/common/ComingSoon'
-
-export function Simulados(): JSX.Element {
-  return (
-    <ComingSoon
-      title="Simulados Inteligentes"
-      subtitle="Treine no formato real da prova Quadrix"
-      icon={<ClipboardCheck size={20} />}
-      milestone="M7"
-      features={[
-        'Modo oficial: 60 questões, pesos 20/80, cronometrado',
-        'Corte de eliminação (10 gerais / 40 específicos)',
-        'Simulado por disciplina ou assunto',
-        'Modo personalizado e modo livre',
-        'Resultado detalhado por bloco e disciplina',
-        'Histórico e evolução entre simulados'
-      ]}
-    />
-  )
-}
 
 export function Estatisticas(): JSX.Element {
   return (
