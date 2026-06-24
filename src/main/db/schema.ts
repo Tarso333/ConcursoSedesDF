@@ -221,6 +221,13 @@ export const achievements = sqliteTable('achievements', {
   unlockedAt: text('unlocked_at')
 })
 
+export const questionStates = sqliteTable('question_states', {
+  questionId: integer('question_id').primaryKey(),
+  favorite: integer('favorite', { mode: 'boolean' }).notNull().default(false),
+  note: text('note'),
+  updatedAt: text('updated_at').notNull().default(sql`(datetime('now'))`)
+})
+
 export const aiMessages = sqliteTable('ai_messages', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   role: text('role', { enum: ['user', 'assistant'] }).notNull(),

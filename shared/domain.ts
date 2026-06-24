@@ -64,6 +64,44 @@ export interface Question {
   options: QuestionOption[]
 }
 
+export type QuestionFilterStatus =
+  | 'TODAS'
+  | 'NAO_RESPONDIDAS'
+  | 'ERRADAS'
+  | 'ACERTADAS'
+  | 'FAVORITAS'
+
+export interface QuestionFilter {
+  disciplineId?: number | null
+  topicId?: number | null
+  difficulty?: Difficulty | null
+  type?: QuestionType | null
+  status?: QuestionFilterStatus
+  search?: string | null
+}
+
+export interface QuestionForPractice extends Question {
+  disciplineName: string
+  disciplineColor: string
+  topicName: string | null
+  favorite: boolean
+  answeredCount: number
+  lastCorrect: boolean | null
+}
+
+export interface AnswerInput {
+  questionId: number
+  selectedOptionId: number
+  timeMs: number
+  source?: AnswerSource
+}
+
+export interface AnswerResult {
+  isCorrect: boolean
+  correctOptionId: number
+  explanation: string | null
+}
+
 export interface Settings {
   userName: string
   theme: ThemeMode

@@ -1,7 +1,6 @@
 import {
   AlertTriangle,
   BarChart3,
-  BookOpen,
   CalendarRange,
   ClipboardCheck,
   Layers,
@@ -11,25 +10,6 @@ import {
   Target
 } from 'lucide-react'
 import { ComingSoon } from '../components/common/ComingSoon'
-
-export function Questoes(): JSX.Element {
-  return (
-    <ComingSoon
-      title="Banco de Questões"
-      subtitle="Resolva com filtros avançados, no estilo QConcursos"
-      icon={<BookOpen size={20} />}
-      milestone="M3"
-      features={[
-        'Filtros por disciplina, assunto, dificuldade e status',
-        'Resolução com feedback imediato e comentário',
-        'Favoritar e marcar questões',
-        'Registro de tempo por questão',
-        'Filtro de “somente erradas” e “favoritas”',
-        'Erros alimentam o caderno automaticamente'
-      ]}
-    />
-  )
-}
 
 export function Simulados(): JSX.Element {
   return (

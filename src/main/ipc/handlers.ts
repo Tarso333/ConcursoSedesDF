@@ -1,4 +1,5 @@
 import { app, ipcMain } from 'electron'
+import type { AnswerInput, QuestionFilter } from '@shared/domain'
 import { IPC, type SettingsUpdateInput } from '@shared/ipc'
 import { getDbPath } from '../db/connection'
 import {
@@ -6,6 +7,12 @@ import {
   getDisciplinesWithStats,
   getTopics
 } from '../repositories/catalogRepository'
+import {
+  answerQuestion,
+  countQuestions,
+  getPracticeQuestions,
+  toggleFavorite
+} from '../repositories/questionRepository'
 import { getSettings, updateSettings } from '../repositories/settingsRepository'
 import { getDashboardOverview } from '../services/dashboardService'
 
@@ -24,4 +31,11 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.catalogDisciplinesWithStats, () => getDisciplinesWithStats())
 
   ipcMain.handle(IPC.dashboardOverview, () => getDashboardOverview())
+
+  ipcMain.handle(IPC.questionsPractice, (_e, filter: QuestionFilter, limit: number) =>
+    getPracticeQuestions(filter, limit)
+  )
+  ipcMain.handle(IPC.questionsCount, (_e, filter: QuestionFilter) => countQuestions(filter))
+  ipcMain.handle(IPC.questionsAnswer, (_e, input: AnswerInput) => answerQuestion(input))
+  ipcMain.handle(IPC.questionsToggleFavorite, (_e, questionId: number) => toggleFavorite(questionId))
 }

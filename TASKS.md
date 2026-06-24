@@ -1,7 +1,7 @@
 # TASKS — APROVA SEDES DF (Backlog)
 
 > Derivado do [`ROADMAP.md`](./ROADMAP.md). Detalhe fino só no milestone corrente.
-> **Última atualização:** 2026-06-23 · **Milestone corrente:** **M3 — Banco de Questões & Resolução**.
+> **Última atualização:** 2026-06-23 · **Milestone corrente:** **M4 — Caderno de Erros**.
 > **Status:** ⬜ pendente · 🟡 em andamento · ✅ concluído · ⏸️ bloqueado (externo)
 
 ---
@@ -26,15 +26,27 @@
 
 ---
 
-## 🎯 Sessão 2 — Próximo: M3 (Banco de Questões & Resolução)
+## ✅ Sessão 2 — M3 (Banco de Questões & Resolução) concluído
+
+| ID | Tarefa | Status |
+|---|---|---|
+| T-M3-01 | Repositório de questões com filtros (disciplina, tópico, dificuldade, tipo, situação: não respondidas/erradas/acertadas/favoritas) | ✅ |
+| T-M3-02 | IPC + registro de `Answer` (com tempo); contagem por filtro | ✅ |
+| T-M3-03 | Tela de resolução: filtros → treino → feedback imediato + comentário + resumo | ✅ |
+| T-M3-04 | Favoritar questão (migration v2 `question_states`); registro automático no caderno de erros | ✅ |
+| T-M3-05 | Ampliar banco de questões (ingestão de provas Quadrix anteriores) | 🟡 backlog de dados |
+
+**Verificado:** typecheck (node+web) limpo · `electron-vite build` verde · boot aplica a migration v2 sem erro.
+
+---
+
+## 🎯 Sessão 3 — Próximo: M4 (Caderno de Erros)
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---|---|
-| T-M3-01 | Repositório de questões com filtros (disciplina, tópico, dificuldade, status, favoritas, erradas) | Crítica | ⬜ |
-| T-M3-02 | IPC + serviço: listar questões paginadas, registrar `Answer` (com tempo) | Crítica | ⬜ |
-| T-M3-03 | Tela de resolução: enunciado, alternativas, feedback imediato + comentário | Crítica | ⬜ |
-| T-M3-04 | Favoritar/marcar questão; registro automático no caderno de erros | Alta | ⬜ |
-| T-M3-05 | Ampliar banco de questões (ingestão de provas Quadrix anteriores) | Alta | ⬜ |
+| T-M4-01 | Repositório/IPC do caderno: listar erros (filtros), classificar tipo, marcar compreendido | Crítica | ⬜ |
+| T-M4-02 | Tela do caderno de erros + "revisar como quiz" | Crítica | ⬜ |
+| T-M4-03 | Vínculo erro → flashcard/revisão (ponte p/ M5/M6) | Alta | ⬜ |
 
 ---
 

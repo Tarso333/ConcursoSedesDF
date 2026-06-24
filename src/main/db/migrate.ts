@@ -246,7 +246,19 @@ CREATE INDEX IF NOT EXISTS idx_mock_items_exam ON mock_exam_items(mock_exam_id);
 CREATE INDEX IF NOT EXISTS idx_study_tasks_date ON study_tasks(plan_id, date);
 `
 
-const MIGRATIONS: Migration[] = [{ version: 1, name: 'init', up: MIGRATION_0001_INIT }]
+const MIGRATION_0002_QUESTION_STATES = /* sql */ `
+CREATE TABLE IF NOT EXISTS question_states (
+  question_id INTEGER PRIMARY KEY REFERENCES questions(id) ON DELETE CASCADE,
+  favorite INTEGER NOT NULL DEFAULT 0,
+  note TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+`
+
+const MIGRATIONS: Migration[] = [
+  { version: 1, name: 'init', up: MIGRATION_0001_INIT },
+  { version: 2, name: 'question_states', up: MIGRATION_0002_QUESTION_STATES }
+]
 
 export function runMigrations(sqlite: Database.Database): void {
   const current = sqlite.pragma('user_version', { simple: true }) as number

@@ -1,9 +1,13 @@
 // Contrato da ponte IPC (renderer ↔ main). É a fonte da verdade de tipos da fronteira.
 import type {
+  AnswerInput,
+  AnswerResult,
   AppInfo,
   DashboardOverview,
   Discipline,
   DisciplineWithStats,
+  QuestionFilter,
+  QuestionForPractice,
   Settings,
   ThemeMode,
   Topic
@@ -17,7 +21,11 @@ export const IPC = {
   catalogDisciplines: 'catalog:disciplines',
   catalogTopics: 'catalog:topics',
   catalogDisciplinesWithStats: 'catalog:disciplinesWithStats',
-  dashboardOverview: 'dashboard:overview'
+  dashboardOverview: 'dashboard:overview',
+  questionsPractice: 'questions:practice',
+  questionsCount: 'questions:count',
+  questionsAnswer: 'questions:answer',
+  questionsToggleFavorite: 'questions:toggleFavorite'
 } as const
 
 export interface SettingsUpdateInput {
@@ -40,4 +48,8 @@ export interface AppApi {
   getTopics(disciplineId: number): Promise<Topic[]>
   getDisciplinesWithStats(): Promise<DisciplineWithStats[]>
   getDashboardOverview(): Promise<DashboardOverview>
+  getPracticeQuestions(filter: QuestionFilter, limit: number): Promise<QuestionForPractice[]>
+  countQuestions(filter: QuestionFilter): Promise<number>
+  answerQuestion(input: AnswerInput): Promise<AnswerResult>
+  toggleFavorite(questionId: number): Promise<{ favorite: boolean }>
 }

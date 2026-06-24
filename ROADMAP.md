@@ -26,9 +26,9 @@ Schema Drizzle (~25 tabelas: catálogo + progresso); migrations versionadas via 
 Sidebar com navegação completa + rotas; **Dashboard** com dados reais: countdown, % do edital ponderado, questões/acertos/erros, taxa de acerto, estimativa de aprovação, evolução 14 dias, fortes/fracas, progresso por disciplina. Configurações funcional. Demais features com placeholder por milestone.
 **Próximo:** M3 — Banco de Questões & Resolução.
 
-### M3 — Banco de Questões & Resolução ⬜
-Listagem com filtros (disciplina, tópico, dificuldade, status, favoritas, erradas); resolver com feedback + comentário; registrar `Answer` (com tempo); favoritar.
-**Pronto quando:** filtrar por disciplina e resolver questões com feedback persistido.
+### M3 — Banco de Questões & Resolução ✅ (concluído 2026-06-23)
+Filtros (disciplina, tópico, dificuldade, tipo, situação: não respondidas/erradas/acertadas/favoritas); treino com feedback imediato + comentário; `Answer` registrada com tempo; favoritar (`question_states`); erro alimenta o caderno automaticamente; tela de resumo.
+**Verificado:** typecheck (node+web) + `electron-vite build` verdes; boot aplica migration v2 sem erro.
 
 ### M4 — Caderno de Erros ⬜
 Registro automático de erros; filtros; classificar tipo de erro; "revisar como quiz"; marcar compreendido. Gera flashcards/itens de revisão.

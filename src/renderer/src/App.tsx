@@ -2,6 +2,7 @@ import { HashRouter, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
 import { Configuracoes } from './routes/Configuracoes'
 import { Dashboard } from './routes/Dashboard'
+import { Questoes } from './routes/Questoes'
 import {
   CadernoErros,
   Estatisticas,
@@ -9,7 +10,6 @@ import {
   Metas,
   ModoAprovacao,
   Planejamento,
-  Questoes,
   Revisao,
   Simulados,
   TutorIA
