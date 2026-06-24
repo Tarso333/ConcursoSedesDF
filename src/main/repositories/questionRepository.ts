@@ -16,6 +16,7 @@ import {
   questions,
   topics
 } from '../db/schema'
+import { awardForAnswer } from '../services/gamificationService'
 
 function buildConditions(filter: QuestionFilter): SQL[] {
   const conds: SQL[] = []
@@ -188,6 +189,7 @@ export function answerQuestion(input: AnswerInput): AnswerResult {
     }
   }
 
+  awardForAnswer(isCorrect)
   return { isCorrect, correctOptionId, explanation: q?.explanation ?? null }
 }
 

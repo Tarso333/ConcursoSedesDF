@@ -39,7 +39,11 @@ import {
   toggleFavorite
 } from '../repositories/questionRepository'
 import { getSettings, updateSettings } from '../repositories/settingsRepository'
+import { getApprovalPlan } from '../services/approvalService'
+import { clearAiHistory, getAiHistory, getAiStatus, sendAiMessage } from '../services/aiService'
 import { getDashboardOverview } from '../services/dashboardService'
+import { getGamification } from '../services/gamificationService'
+import { generateStudyPlan, getStudyPlan, toggleStudyTask } from '../services/planningService'
 import { getDueCards, getReviewStats, rateCard } from '../services/reviewService'
 import {
   createMockExam,
@@ -47,6 +51,7 @@ import {
   getMockHistory,
   getMockResult
 } from '../services/simuladoService'
+import { getStatsOverview } from '../services/statsService'
 
 export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.appGetInfo, () => ({
@@ -102,4 +107,24 @@ export function registerIpcHandlers(): void {
   )
   ipcMain.handle(IPC.simHistory, () => getMockHistory())
   ipcMain.handle(IPC.simResult, (_e, examId: number) => getMockResult(examId))
+
+  // Gamificação (M9)
+  ipcMain.handle(IPC.gamificationProgress, () => getGamification())
+
+  // Estatísticas (M8)
+  ipcMain.handle(IPC.statsOverview, () => getStatsOverview())
+
+  // Planejamento (M10)
+  ipcMain.handle(IPC.planGet, () => getStudyPlan())
+  ipcMain.handle(IPC.planGenerate, (_e, dailyMinutes: number) => generateStudyPlan(dailyMinutes))
+  ipcMain.handle(IPC.planToggleTask, (_e, id: number) => toggleStudyTask(id))
+
+  // Modo Aprovação (M11)
+  ipcMain.handle(IPC.approvalPlan, () => getApprovalPlan())
+
+  // Tutor IA (M12)
+  ipcMain.handle(IPC.aiStatus, () => getAiStatus())
+  ipcMain.handle(IPC.aiHistory, () => getAiHistory())
+  ipcMain.handle(IPC.aiSend, (_e, content: string) => sendAiMessage(content))
+  ipcMain.handle(IPC.aiClear, () => clearAiHistory())
 }

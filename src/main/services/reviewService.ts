@@ -4,6 +4,7 @@ import type { DueCard, ReviewRating, ReviewResult, ReviewStats } from '@shared/d
 import { getDb } from '../db/connection'
 import { decks, flashcards, srsCards, srsReviews } from '../db/schema'
 import { parseSqlDate, toSqlDate } from '../lib/sqlDate'
+import { awardForReview } from './gamificationService'
 
 const scheduler = fsrs(generatorParameters({ enable_fuzz: true }))
 
@@ -93,5 +94,6 @@ export function rateCard(srsCardId: number, rating: ReviewRating): ReviewResult 
     })
     .run()
 
+  awardForReview()
   return { nextDue: toSqlDate(nc.due), intervalDays: nc.scheduled_days }
 }

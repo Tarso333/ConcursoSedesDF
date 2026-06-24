@@ -183,6 +183,103 @@ export interface ReviewStats {
   total: number
 }
 
+// ───────── Gamificação (M9) ─────────
+export interface Achievement {
+  code: string
+  name: string
+  description: string
+  icon: string
+  unlocked: boolean
+  unlockedAt: string | null
+}
+
+export interface GamificationProgress {
+  xp: number
+  level: number
+  xpIntoLevel: number
+  xpForNextLevel: number
+  streakDays: number
+  longestStreak: number
+  dailyGoalQuestions: number
+  answeredToday: number
+  achievements: Achievement[]
+}
+
+// ───────── Estatísticas (M8) ─────────
+export interface RadarPoint {
+  discipline: string
+  accuracy: number // 0..100
+  block: DisciplineBlock
+}
+
+export interface StatsOverview {
+  totalAnswered: number
+  accuracy: number
+  byDifficulty: { difficulty: Difficulty; answered: number; accuracy: number }[]
+  radar: RadarPoint[]
+  daily: DailyPoint[] // últimos 30 dias
+  readinessPct: number
+  bestDisciplines: DisciplineScore[]
+  worstDisciplines: DisciplineScore[]
+}
+
+// ───────── Planejamento (M10) ─────────
+export interface StudyTaskItem {
+  id: number
+  disciplineId: number | null
+  disciplineName: string | null
+  disciplineColor: string | null
+  date: string
+  type: StudyTaskType
+  title: string
+  plannedMinutes: number
+  done: boolean
+}
+
+export interface StudyPlanView {
+  planId: number | null
+  startDate: string
+  examDate: string
+  dailyMinutes: number
+  totalTasks: number
+  doneTasks: number
+  byDate: { date: string; tasks: StudyTaskItem[] }[]
+}
+
+// ───────── Modo Aprovação (M11) ─────────
+export interface PriorityDiscipline {
+  disciplineId: number
+  name: string
+  color: string
+  block: DisciplineBlock
+  weight: number
+  accuracy: number
+  answeredCount: number
+  priorityScore: number
+  reason: string
+}
+
+export interface ApprovalPlan {
+  daysUntilExam: number
+  approvalEstimatePct: number
+  focus: PriorityDiscipline[]
+  actions: { label: string; detail: string; route: string }[]
+}
+
+// ───────── Tutor IA (M12) ─────────
+export interface AiMessageDTO {
+  id: number
+  role: 'user' | 'assistant'
+  content: string
+  createdAt: string
+}
+
+export interface AiStatus {
+  configured: boolean
+  provider: string | null
+  model: string | null
+}
+
 // ───────── Simulados (M7) ─────────
 export interface MockExamConfig {
   mode: MockExamMode

@@ -1,8 +1,11 @@
 // Contrato da ponte IPC (renderer ↔ main). É a fonte da verdade de tipos da fronteira.
 import type {
+  AiMessageDTO,
+  AiStatus,
   AnswerInput,
   AnswerResult,
   AppInfo,
+  ApprovalPlan,
   DashboardOverview,
   Deck,
   DeckInput,
@@ -15,6 +18,7 @@ import type {
   ErrorType,
   Flashcard,
   FlashcardInput,
+  GamificationProgress,
   MockAnswerInput,
   MockExamConfig,
   MockExamResult,
@@ -26,6 +30,8 @@ import type {
   ReviewResult,
   ReviewStats,
   Settings,
+  StatsOverview,
+  StudyPlanView,
   ThemeMode,
   Topic
 } from './domain'
@@ -60,7 +66,17 @@ export const IPC = {
   simCreate: 'sim:create',
   simFinish: 'sim:finish',
   simHistory: 'sim:history',
-  simResult: 'sim:result'
+  simResult: 'sim:result',
+  gamificationProgress: 'gamification:progress',
+  statsOverview: 'stats:overview',
+  planGet: 'plan:get',
+  planGenerate: 'plan:generate',
+  planToggleTask: 'plan:toggleTask',
+  approvalPlan: 'approval:plan',
+  aiStatus: 'ai:status',
+  aiHistory: 'ai:history',
+  aiSend: 'ai:send',
+  aiClear: 'ai:clear'
 } as const
 
 export interface SettingsUpdateInput {
@@ -109,4 +125,19 @@ export interface AppApi {
   finishMockExam(examId: number, answers: MockAnswerInput[]): Promise<MockExamResult>
   getMockHistory(): Promise<MockHistoryItem[]>
   getMockResult(examId: number): Promise<MockExamResult>
+  // Gamificação (M9)
+  getGamification(): Promise<GamificationProgress>
+  // Estatísticas (M8)
+  getStatsOverview(): Promise<StatsOverview>
+  // Planejamento (M10)
+  getStudyPlan(): Promise<StudyPlanView>
+  generateStudyPlan(dailyMinutes: number): Promise<StudyPlanView>
+  toggleStudyTask(id: number): Promise<void>
+  // Modo Aprovação (M11)
+  getApprovalPlan(): Promise<ApprovalPlan>
+  // Tutor IA (M12)
+  getAiStatus(): Promise<AiStatus>
+  getAiHistory(): Promise<AiMessageDTO[]>
+  sendAiMessage(content: string): Promise<AiMessageDTO>
+  clearAiHistory(): Promise<void>
 }

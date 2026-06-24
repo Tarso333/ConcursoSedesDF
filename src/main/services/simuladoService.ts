@@ -20,6 +20,7 @@ import {
   questions
 } from '../db/schema'
 import { nowSql } from '../lib/sqlDate'
+import { awardForSimulado } from './gamificationService'
 
 const SECONDS_PER_QUESTION = 180
 
@@ -326,6 +327,7 @@ export function finishMockExam(examId: number, submitted: MockAnswerInput[]): Mo
     .set({ status: 'CONCLUIDO', score: result.scorePct * 100, finishedAt: nowSql() })
     .where(eq(mockExams.id, examId))
     .run()
+  awardForSimulado(result.correct, result.mode === 'OFICIAL')
   return result
 }
 

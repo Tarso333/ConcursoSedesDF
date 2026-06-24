@@ -3,11 +3,15 @@ import { AppLayout } from './components/layout/AppLayout'
 import { CadernoErros } from './routes/CadernoErros'
 import { Configuracoes } from './routes/Configuracoes'
 import { Dashboard } from './routes/Dashboard'
+import { Estatisticas } from './routes/Estatisticas'
 import { Flashcards } from './routes/Flashcards'
+import { Metas } from './routes/Metas'
+import { ModoAprovacao } from './routes/ModoAprovacao'
+import { Planejamento } from './routes/Planejamento'
 import { Questoes } from './routes/Questoes'
 import { Revisao } from './routes/Revisao'
 import { Simulados } from './routes/Simulados'
-import { Estatisticas, Metas, ModoAprovacao, Planejamento, TutorIA } from './routes/stubs'
+import { TutorIA } from './routes/TutorIA'
 
 export default function App(): JSX.Element {
   return (

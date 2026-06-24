@@ -46,7 +46,17 @@ const api: AppApi = {
   finishMockExam: (examId: number, ans: MockAnswerInput[]) =>
     ipcRenderer.invoke(IPC.simFinish, examId, ans),
   getMockHistory: () => ipcRenderer.invoke(IPC.simHistory),
-  getMockResult: (examId: number) => ipcRenderer.invoke(IPC.simResult, examId)
+  getMockResult: (examId: number) => ipcRenderer.invoke(IPC.simResult, examId),
+  getGamification: () => ipcRenderer.invoke(IPC.gamificationProgress),
+  getStatsOverview: () => ipcRenderer.invoke(IPC.statsOverview),
+  getStudyPlan: () => ipcRenderer.invoke(IPC.planGet),
+  generateStudyPlan: (dailyMinutes: number) => ipcRenderer.invoke(IPC.planGenerate, dailyMinutes),
+  toggleStudyTask: (id: number) => ipcRenderer.invoke(IPC.planToggleTask, id),
+  getApprovalPlan: () => ipcRenderer.invoke(IPC.approvalPlan),
+  getAiStatus: () => ipcRenderer.invoke(IPC.aiStatus),
+  getAiHistory: () => ipcRenderer.invoke(IPC.aiHistory),
+  sendAiMessage: (content: string) => ipcRenderer.invoke(IPC.aiSend, content),
+  clearAiHistory: () => ipcRenderer.invoke(IPC.aiClear)
 }
 
 if (process.contextIsolated) {
