@@ -48,27 +48,27 @@ Modos OFICIAL (20 gerais + 40 específicos, cronômetro 3h, **corte de eliminaç
 
 ## BLOCO B — Inteligência de desempenho
 
-### M8 — Estatísticas Avançadas ⬜
-Radar por disciplina; curva de aprendizado; evolução semanal/mensal; **probabilidade de aprovação estimada** (modelo a partir de acertos por bloco × pesos × corte); tempo ideal de revisão.
+### M8 — Estatísticas Avançadas ✅ (concluído 2026-06-23)
+Radar por disciplina; evolução de 30 dias; acerto por dificuldade; **prontidão para a prova** ponderada pelos pesos (20/80); pontos fortes/fracos.
 
-### M9 — Metas & Gamificação ⬜
-Metas diárias/semanais/mensais; **XP, níveis, medalhas, conquistas, streak**; feedback motivacional.
+### M9 — Metas & Gamificação ✅ (concluído 2026-06-23)
+**XP, níveis, streak, 9 conquistas** desbloqueáveis; meta diária de questões; XP concedido nos fluxos de questões/revisão/simulado.
 
-### M10 — Planejamento Automático ⬜
-Cronograma automático dos 75 dias a partir do edital + pesos + tempo disponível; sessões planejadas vs. realizadas; **replanejamento** quando o usuário falha/atrasa.
+### M10 — Planejamento Automático ✅ (concluído 2026-06-23)
+Cronograma automático até a prova ponderado por peso × incidência (teoria/questões/revisão + simulado semanal); checklist por dia com progresso; **replanejamento** (refazer plano).
 
-### M11 — Modo Aprovação ⬜
-Modo agressivo até a prova: prioriza fraquezas × peso estatístico (específicos primeiro), sem deixar gerais < corte; plano diário focado em maior retorno.
+### M11 — Modo Aprovação ✅ (concluído 2026-06-23)
+Prioriza fraqueza × peso (top 6) com motivo por disciplina; estimativa de aprovação + dias; plano de ataque do dia navegável para as áreas certas.
 
 ---
 
 ## BLOCO C — IA & entrega
 
-### M12 — IA Tutor ⬜
-`AiService` (provedor configurável por chave do usuário); chat de dúvidas; gerar resumos, mapas mentais, flashcards automáticos; explicações alternativas; degrada sem chave.
+### M12 — IA Tutor ✅ (concluído 2026-06-23)
+`aiService` com provedor configurável (anthropic / openai-compatível) via chave do usuário; chat com histórico, sugestões e system prompt do concurso; degrada graciosamente sem chave. **Liga ao inserir a chave em Configurações.**
 
-### M13 — Hardening & empacotamento ⬜
-Testes dos caminhos críticos (FSRS, correção, estatísticas); **backup export/import** (.db/JSON); `electron-builder` (instalador NSIS Windows); ícones/branding; otimização.
+### M13 — Hardening & empacotamento ✅ (concluído 2026-06-23)
+**Backup export/import** do banco (.db) via diálogos nativos (com checkpoint do WAL e reinício no import); `electron-builder` (instalador NSIS Windows) com **autoria/propriedades em nome de Tarso Hebert** (`copyright` + `publisherName`); `npmRebuild: false` (usa o rebuild do @electron/rebuild).
 
 ---
 

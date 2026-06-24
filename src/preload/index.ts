@@ -56,7 +56,9 @@ const api: AppApi = {
   getAiStatus: () => ipcRenderer.invoke(IPC.aiStatus),
   getAiHistory: () => ipcRenderer.invoke(IPC.aiHistory),
   sendAiMessage: (content: string) => ipcRenderer.invoke(IPC.aiSend, content),
-  clearAiHistory: () => ipcRenderer.invoke(IPC.aiClear)
+  clearAiHistory: () => ipcRenderer.invoke(IPC.aiClear),
+  exportBackup: () => ipcRenderer.invoke(IPC.backupExport),
+  importBackup: () => ipcRenderer.invoke(IPC.backupImport)
 }
 
 if (process.contextIsolated) {

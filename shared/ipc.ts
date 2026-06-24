@@ -76,7 +76,9 @@ export const IPC = {
   aiStatus: 'ai:status',
   aiHistory: 'ai:history',
   aiSend: 'ai:send',
-  aiClear: 'ai:clear'
+  aiClear: 'ai:clear',
+  backupExport: 'backup:export',
+  backupImport: 'backup:import'
 } as const
 
 export interface SettingsUpdateInput {
@@ -140,4 +142,7 @@ export interface AppApi {
   getAiHistory(): Promise<AiMessageDTO[]>
   sendAiMessage(content: string): Promise<AiMessageDTO>
   clearAiHistory(): Promise<void>
+  // Backup (M13)
+  exportBackup(): Promise<{ ok: boolean; path?: string; canceled?: boolean }>
+  importBackup(): Promise<{ ok: boolean; canceled?: boolean }>
 }

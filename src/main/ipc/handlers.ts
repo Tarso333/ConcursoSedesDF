@@ -41,6 +41,7 @@ import {
 import { getSettings, updateSettings } from '../repositories/settingsRepository'
 import { getApprovalPlan } from '../services/approvalService'
 import { clearAiHistory, getAiHistory, getAiStatus, sendAiMessage } from '../services/aiService'
+import { exportBackup, importBackup } from '../services/backupService'
 import { getDashboardOverview } from '../services/dashboardService'
 import { getGamification } from '../services/gamificationService'
 import { generateStudyPlan, getStudyPlan, toggleStudyTask } from '../services/planningService'
@@ -127,4 +128,8 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.aiHistory, () => getAiHistory())
   ipcMain.handle(IPC.aiSend, (_e, content: string) => sendAiMessage(content))
   ipcMain.handle(IPC.aiClear, () => clearAiHistory())
+
+  // Backup (M13)
+  ipcMain.handle(IPC.backupExport, () => exportBackup())
+  ipcMain.handle(IPC.backupImport, () => importBackup())
 }

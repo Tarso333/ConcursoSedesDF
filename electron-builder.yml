@@ -1,8 +1,12 @@
-appId: br.com.tarso.aprovasedesdf
+appId: br.com.tarsohebert.aprovasedesdf
 productName: APROVA SEDES DF
+copyright: Copyright © 2026 Tarso Hebert
 directories:
   output: release/${version}
   buildResources: build
+# better-sqlite3 já é recompilado para a ABI do Electron via @electron/rebuild
+# (ver ADR-009); evita o rebuild do electron-builder, que quebra com pnpm no Windows.
+npmRebuild: false
 files:
   - out/**/*
   - package.json
@@ -11,8 +15,10 @@ asarUnpack:
 win:
   target:
     - nsis
+  publisherName: Tarso Hebert
   artifactName: ${productName}-${version}-setup.${ext}
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   perMachine: false
+  shortcutName: APROVA SEDES DF

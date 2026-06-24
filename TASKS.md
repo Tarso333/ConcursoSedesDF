@@ -1,8 +1,12 @@
 # TASKS — APROVA SEDES DF (Backlog)
 
 > Derivado do [`ROADMAP.md`](./ROADMAP.md). Detalhe fino só no milestone corrente.
-> **Última atualização:** 2026-06-23 · **Milestone corrente:** **M7 — Simulados Inteligentes**.
+> **Última atualização:** 2026-06-23 · **Status: PLATAFORMA COMPLETA — M0–M13 concluídos. ✅**
 > **Status:** ⬜ pendente · 🟡 em andamento · ✅ concluído · ⏸️ bloqueado (externo)
+>
+> **Sessões 4–5 (M8–M13) concluídas:** Estatísticas (radar/prontidão), Gamificação (XP/níveis/streak/9 conquistas), Planejamento automático (cronograma até a prova), Modo Aprovação (prioridade fraqueza×peso), Tutor IA (provedor por chave) e Hardening (backup export/import + empacotamento `--dir` com autoria de Tarso Hebert). App empacotado em `release/0.1.0/win-unpacked/APROVA SEDES DF.exe`.
+>
+> **Pendências externas:** (1) **chave de IA** para ligar o Tutor (M12); (2) **instalador NSIS** exige Modo Desenvolvedor/admin do Windows para extrair o winCodeSign (symlinks) — o app `--dir` já roda sem isso; (3) banco de questões real (provas Quadrix) — ampliação de dados.
 
 ---
 

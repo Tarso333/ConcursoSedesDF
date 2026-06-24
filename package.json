@@ -2,7 +2,7 @@
   "name": "aprova-sedes-df",
   "version": "0.1.0",
   "description": "App desktop offline-first para aprovação no concurso SEDES DF 2026 (Quadrix)",
-  "author": "Tarso Vieira",
+  "author": "Tarso Hebert",
   "license": "UNLICENSED",
   "private": true,
   "main": "./out/main/index.js",

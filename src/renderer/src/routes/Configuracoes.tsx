@@ -1,4 +1,4 @@
-import { Check, Database, Save, Settings as SettingsIcon } from 'lucide-react'
+import { Check, Database, Download, Save, Settings as SettingsIcon, Upload } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { SettingsUpdateInput } from '@shared/ipc'
 import { PageHeader } from '../components/common/PageHeader'
@@ -36,6 +36,15 @@ export function Configuracoes(): JSX.Element {
   const [form, setForm] = useState<SettingsUpdateInput>({})
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [backupMsg, setBackupMsg] = useState('')
+
+  const doExport = async (): Promise<void> => {
+    const r = await api.exportBackup()
+    if (r.ok) setBackupMsg(`Backup salvo em: ${r.path}`)
+  }
+  const doImport = async (): Promise<void> => {
+    await api.importBackup() // se confirmado, o app reinicia
+  }
 
   useEffect(() => {
     if (settings) {
@@ -174,6 +183,27 @@ export function Configuracoes(): JSX.Element {
             <p className="text-xs text-muted-foreground">
               Seus dados ficam apenas neste computador.
             </p>
+          </Card>
+
+          <Card className="space-y-3 p-5">
+            <CardHeader title="Backup" subtitle="Exporte ou restaure todos os seus dados" />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => void doExport()}
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition hover:bg-muted"
+              >
+                <Download size={15} /> Exportar
+              </button>
+              <button
+                type="button"
+                onClick={() => void doImport()}
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition hover:bg-muted"
+              >
+                <Upload size={15} /> Importar
+              </button>
+            </div>
+            {backupMsg ? <p className="break-all text-xs text-success">{backupMsg}</p> : null}
           </Card>
         </div>
       </div>
