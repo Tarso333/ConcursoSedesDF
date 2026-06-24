@@ -147,20 +147,20 @@ export function Configuracoes(): JSX.Element {
               title="Tutor IA (opcional)"
               subtitle="O app funciona 100% offline; a IA é um extra"
             />
-            <Field label="Provedor" hint="Ex.: provedor de LLM compatível">
+            <Field label="Provedor" hint="anthropic (Claude/Opus), openai ou openrouter">
               <input
                 className={inputCls}
                 value={form.aiProvider ?? ''}
                 onChange={(e) => set('aiProvider', e.target.value)}
-                placeholder="(não configurado)"
+                placeholder="anthropic"
               />
             </Field>
-            <Field label="Modelo">
+            <Field label="Modelo" hint="Padrão do Opus 4.8 se deixar vazio com provedor anthropic">
               <input
                 className={inputCls}
                 value={form.aiModel ?? ''}
                 onChange={(e) => set('aiModel', e.target.value)}
-                placeholder="(padrão do provedor)"
+                placeholder="claude-opus-4-8"
               />
             </Field>
             <Field label="Chave de API" hint={settings?.hasAiKey ? 'Uma chave já está salva.' : 'Nenhuma chave salva.'}>

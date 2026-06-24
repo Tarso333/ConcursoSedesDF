@@ -63,7 +63,7 @@ async function callProvider(
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: model || 'claude-3-5-sonnet-latest',
+        model: model || 'claude-opus-4-8',
         max_tokens: 1200,
         system: SYSTEM_PROMPT,
         messages: [...history, { role: 'user', content: userText }]
