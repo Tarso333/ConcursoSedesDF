@@ -4,10 +4,22 @@ import type {
   AnswerResult,
   AppInfo,
   DashboardOverview,
+  Deck,
+  DeckInput,
   Discipline,
   DisciplineWithStats,
+  DueCard,
+  ErrorFilter,
+  ErrorLogItem,
+  ErrorStats,
+  ErrorType,
+  Flashcard,
+  FlashcardInput,
   QuestionFilter,
   QuestionForPractice,
+  ReviewRating,
+  ReviewResult,
+  ReviewStats,
   Settings,
   ThemeMode,
   Topic
@@ -25,7 +37,21 @@ export const IPC = {
   questionsPractice: 'questions:practice',
   questionsCount: 'questions:count',
   questionsAnswer: 'questions:answer',
-  questionsToggleFavorite: 'questions:toggleFavorite'
+  questionsToggleFavorite: 'questions:toggleFavorite',
+  errorsList: 'errors:list',
+  errorsStats: 'errors:stats',
+  errorsSetType: 'errors:setType',
+  errorsResolve: 'errors:resolve',
+  decksList: 'decks:list',
+  deckCreate: 'decks:create',
+  deckDelete: 'decks:delete',
+  flashcardsList: 'flashcards:list',
+  flashcardCreate: 'flashcards:create',
+  flashcardDelete: 'flashcards:delete',
+  flashcardsGenerateFromErrors: 'flashcards:generateFromErrors',
+  reviewDue: 'review:due',
+  reviewStats: 'review:stats',
+  reviewRate: 'review:rate'
 } as const
 
 export interface SettingsUpdateInput {
@@ -52,4 +78,21 @@ export interface AppApi {
   countQuestions(filter: QuestionFilter): Promise<number>
   answerQuestion(input: AnswerInput): Promise<AnswerResult>
   toggleFavorite(questionId: number): Promise<{ favorite: boolean }>
+  // Caderno de erros (M4)
+  listErrors(filter: ErrorFilter): Promise<ErrorLogItem[]>
+  getErrorStats(): Promise<ErrorStats>
+  setErrorType(id: number, errorType: ErrorType): Promise<void>
+  resolveError(id: number): Promise<void>
+  // Flashcards & decks (M5)
+  listDecks(): Promise<Deck[]>
+  createDeck(input: DeckInput): Promise<Deck>
+  deleteDeck(id: number): Promise<void>
+  listFlashcards(deckId: number): Promise<Flashcard[]>
+  createFlashcard(input: FlashcardInput): Promise<Flashcard>
+  deleteFlashcard(id: number): Promise<void>
+  generateFlashcardsFromErrors(deckId: number, limit: number): Promise<{ created: number }>
+  // Revisão espaçada / FSRS (M6)
+  getDueCards(limit: number): Promise<DueCard[]>
+  getReviewStats(): Promise<ReviewStats>
+  rateCard(srsCardId: number, rating: ReviewRating): Promise<ReviewResult>
 }

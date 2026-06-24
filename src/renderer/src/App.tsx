@@ -1,19 +1,12 @@
 import { HashRouter, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
+import { CadernoErros } from './routes/CadernoErros'
 import { Configuracoes } from './routes/Configuracoes'
 import { Dashboard } from './routes/Dashboard'
+import { Flashcards } from './routes/Flashcards'
 import { Questoes } from './routes/Questoes'
-import {
-  CadernoErros,
-  Estatisticas,
-  Flashcards,
-  Metas,
-  ModoAprovacao,
-  Planejamento,
-  Revisao,
-  Simulados,
-  TutorIA
-} from './routes/stubs'
+import { Revisao } from './routes/Revisao'
+import { Estatisticas, Metas, ModoAprovacao, Planejamento, Simulados, TutorIA } from './routes/stubs'
 
 export default function App(): JSX.Element {
   return (

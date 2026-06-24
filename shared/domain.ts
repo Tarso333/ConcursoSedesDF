@@ -102,6 +102,87 @@ export interface AnswerResult {
   explanation: string | null
 }
 
+// ───────── Caderno de erros (M4) ─────────
+export type ErrorType = 'CONTEUDO' | 'INTERPRETACAO' | 'DISTRACAO' | 'PEGADINHA' | 'CHUTE' | 'REVISAR'
+
+export interface ErrorLogItem {
+  id: number
+  questionId: number
+  disciplineName: string
+  disciplineColor: string
+  statement: string
+  explanation: string | null
+  correctText: string | null
+  errorType: string | null
+  status: ErrorStatus
+  createdAt: string
+}
+
+export interface ErrorFilter {
+  disciplineId?: number | null
+  status?: ErrorStatus | 'TODOS'
+}
+
+export interface ErrorStats {
+  open: number
+  resolved: number
+  byDiscipline: { name: string; color: string; count: number }[]
+}
+
+// ───────── Flashcards & decks (M5) ─────────
+export interface Deck {
+  id: number
+  name: string
+  disciplineId: number | null
+  description: string | null
+  cardCount: number
+  dueCount: number
+}
+
+export interface Flashcard {
+  id: number
+  deckId: number
+  front: string
+  back: string
+  sourceQuestionId: number | null
+}
+
+export interface DeckInput {
+  name: string
+  disciplineId?: number | null
+  description?: string | null
+}
+
+export interface FlashcardInput {
+  deckId: number
+  front: string
+  back: string
+}
+
+// ───────── Revisão espaçada / FSRS (M6) ─────────
+export type ReviewRating = 1 | 2 | 3 | 4 // Errei | Difícil | Bom | Fácil
+
+export interface DueCard {
+  srsCardId: number
+  flashcardId: number
+  deckId: number
+  deckName: string
+  front: string
+  back: string
+  state: number
+}
+
+export interface ReviewResult {
+  nextDue: string
+  intervalDays: number
+}
+
+export interface ReviewStats {
+  dueNow: number
+  reviewedToday: number
+  total: number
+}
+
 export interface Settings {
   userName: string
   theme: ThemeMode

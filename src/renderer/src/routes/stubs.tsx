@@ -1,14 +1,4 @@
-import {
-  AlertTriangle,
-  BarChart3,
-  CalendarRange,
-  ClipboardCheck,
-  Layers,
-  Rocket,
-  RotateCcw,
-  Sparkles,
-  Target
-} from 'lucide-react'
+import { BarChart3, CalendarRange, ClipboardCheck, Rocket, Sparkles, Target } from 'lucide-react'
 import { ComingSoon } from '../components/common/ComingSoon'
 
 export function Simulados(): JSX.Element {
@@ -25,60 +15,6 @@ export function Simulados(): JSX.Element {
         'Modo personalizado e modo livre',
         'Resultado detalhado por bloco e disciplina',
         'Histórico e evolução entre simulados'
-      ]}
-    />
-  )
-}
-
-export function Flashcards(): JSX.Element {
-  return (
-    <ComingSoon
-      title="Flashcards"
-      subtitle="Memorização ativa, com foco em lei seca"
-      icon={<Layers size={20} />}
-      milestone="M5"
-      features={[
-        'Decks por disciplina e assunto',
-        'Geração automática a partir das questões erradas',
-        'Decks de lei seca (LOAS, PNAS, Maria da Penha, 14.133)',
-        'Modo de estudo com virada de carta (flip)',
-        'Integração com a revisão espaçada'
-      ]}
-    />
-  )
-}
-
-export function Revisao(): JSX.Element {
-  return (
-    <ComingSoon
-      title="Revisão Espaçada"
-      subtitle="Algoritmo FSRS — o motor científico de retenção"
-      icon={<RotateCcw size={20} />}
-      milestone="M6"
-      features={[
-        'Fila diária calculada pelo FSRS',
-        'Avaliação Errei / Difícil / Bom / Fácil',
-        'Repete conteúdos críticos no momento certo',
-        'Integra flashcards e caderno de erros',
-        'Estatísticas de retenção de memória'
-      ]}
-    />
-  )
-}
-
-export function CadernoErros(): JSX.Element {
-  return (
-    <ComingSoon
-      title="Caderno de Erros"
-      subtitle="Transforme erros em pontos ganhos"
-      icon={<AlertTriangle size={20} />}
-      milestone="M4"
-      features={[
-        'Registro automático de cada erro',
-        'Classificação do tipo de erro',
-        'Filtros por disciplina, assunto e período',
-        'Revisar o caderno como um mini-quiz',
-        'Marcar questões como compreendidas'
       ]}
     />
   )

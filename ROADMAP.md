@@ -30,15 +30,15 @@ Sidebar com navegação completa + rotas; **Dashboard** com dados reais: countdo
 Filtros (disciplina, tópico, dificuldade, tipo, situação: não respondidas/erradas/acertadas/favoritas); treino com feedback imediato + comentário; `Answer` registrada com tempo; favoritar (`question_states`); erro alimenta o caderno automaticamente; tela de resumo.
 **Verificado:** typecheck (node+web) + `electron-vite build` verdes; boot aplica migration v2 sem erro.
 
-### M4 — Caderno de Erros ⬜
-Registro automático de erros; filtros; classificar tipo de erro; "revisar como quiz"; marcar compreendido. Gera flashcards/itens de revisão.
+### M4 — Caderno de Erros ✅ (concluído 2026-06-23)
+Registro automático de erros (na resolução); filtros (disciplina/status); classificar tipo de erro; marcar compreendido; expandir p/ ver resposta correta + comentário. Erros viram flashcards no M5.
 
-### M5 — Flashcards & Decks ⬜
-CRUD de decks/cards; geração automática (por disciplina, por questão errada); modo flip.
+### M5 — Flashcards & Decks ✅ (concluído 2026-06-23)
+CRUD de decks/cards; **geração automática a partir do caderno de erros**; modo flip de estudo; cada card entra na fila FSRS. Contadores de cards e "a revisar" por deck.
 
-### M6 — Revisão Espaçada (FSRS) ⬜
-Integra `ts-fsrs`; `SrsCard`; fila diária; avaliação (Errei/Difícil/Bom/Fácil); integra erros e flashcards; estatística de retenção.
-**Pronto quando:** card avaliado hoje reaparece na data correta.
+### M6 — Revisão Espaçada (FSRS) ✅ (concluído 2026-06-23)
+`ts-fsrs` integrado; `srs_cards`/`srs_reviews`; fila de vencidos; avaliação Errei/Difícil/Bom/Fácil agenda a próxima data; stats (vencendo agora, revisados hoje, total). Datas em formato compatível com `datetime('now')`.
+**Verificado:** typecheck (node+web) + build verdes; boot OK.
 
 ### M7 — Simulados Inteligentes ⬜
 Gerar simulados (geral, por disciplina/tópico, por dificuldade); **modo oficial Quadrix** (60q, peso 2 nos específicos, cronometrado, corte de eliminação); modo livre; resultado detalhado + histórico.

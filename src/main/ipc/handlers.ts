@@ -1,5 +1,13 @@
 import { app, ipcMain } from 'electron'
-import type { AnswerInput, QuestionFilter } from '@shared/domain'
+import type {
+  AnswerInput,
+  DeckInput,
+  ErrorFilter,
+  ErrorType,
+  FlashcardInput,
+  QuestionFilter,
+  ReviewRating
+} from '@shared/domain'
 import { IPC, type SettingsUpdateInput } from '@shared/ipc'
 import { getDbPath } from '../db/connection'
 import {
@@ -8,6 +16,21 @@ import {
   getTopics
 } from '../repositories/catalogRepository'
 import {
+  createDeck,
+  createFlashcard,
+  deleteDeck,
+  deleteFlashcard,
+  generateFlashcardsFromErrors,
+  listDecks,
+  listFlashcards
+} from '../repositories/deckRepository'
+import {
+  getErrorStats,
+  listErrors,
+  resolveError,
+  setErrorType
+} from '../repositories/errorRepository'
+import {
   answerQuestion,
   countQuestions,
   getPracticeQuestions,
@@ -15,6 +38,7 @@ import {
 } from '../repositories/questionRepository'
 import { getSettings, updateSettings } from '../repositories/settingsRepository'
 import { getDashboardOverview } from '../services/dashboardService'
+import { getDueCards, getReviewStats, rateCard } from '../services/reviewService'
 
 export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.appGetInfo, () => ({
@@ -38,4 +62,28 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.questionsCount, (_e, filter: QuestionFilter) => countQuestions(filter))
   ipcMain.handle(IPC.questionsAnswer, (_e, input: AnswerInput) => answerQuestion(input))
   ipcMain.handle(IPC.questionsToggleFavorite, (_e, questionId: number) => toggleFavorite(questionId))
+
+  // Caderno de erros (M4)
+  ipcMain.handle(IPC.errorsList, (_e, filter: ErrorFilter) => listErrors(filter))
+  ipcMain.handle(IPC.errorsStats, () => getErrorStats())
+  ipcMain.handle(IPC.errorsSetType, (_e, id: number, errorType: ErrorType) => setErrorType(id, errorType))
+  ipcMain.handle(IPC.errorsResolve, (_e, id: number) => resolveError(id))
+
+  // Flashcards & decks (M5)
+  ipcMain.handle(IPC.decksList, () => listDecks())
+  ipcMain.handle(IPC.deckCreate, (_e, input: DeckInput) => createDeck(input))
+  ipcMain.handle(IPC.deckDelete, (_e, id: number) => deleteDeck(id))
+  ipcMain.handle(IPC.flashcardsList, (_e, deckId: number) => listFlashcards(deckId))
+  ipcMain.handle(IPC.flashcardCreate, (_e, input: FlashcardInput) => createFlashcard(input))
+  ipcMain.handle(IPC.flashcardDelete, (_e, id: number) => deleteFlashcard(id))
+  ipcMain.handle(IPC.flashcardsGenerateFromErrors, (_e, deckId: number, limit: number) =>
+    generateFlashcardsFromErrors(deckId, limit)
+  )
+
+  // Revisão espaçada / FSRS (M6)
+  ipcMain.handle(IPC.reviewDue, (_e, limit: number) => getDueCards(limit))
+  ipcMain.handle(IPC.reviewStats, () => getReviewStats())
+  ipcMain.handle(IPC.reviewRate, (_e, srsCardId: number, rating: ReviewRating) =>
+    rateCard(srsCardId, rating)
+  )
 }

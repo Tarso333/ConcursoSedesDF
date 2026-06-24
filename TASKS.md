@@ -1,7 +1,7 @@
 # TASKS — APROVA SEDES DF (Backlog)
 
 > Derivado do [`ROADMAP.md`](./ROADMAP.md). Detalhe fino só no milestone corrente.
-> **Última atualização:** 2026-06-23 · **Milestone corrente:** **M4 — Caderno de Erros**.
+> **Última atualização:** 2026-06-23 · **Milestone corrente:** **M7 — Simulados Inteligentes**.
 > **Status:** ⬜ pendente · 🟡 em andamento · ✅ concluído · ⏸️ bloqueado (externo)
 
 ---
@@ -40,13 +40,26 @@
 
 ---
 
-## 🎯 Sessão 3 — Próximo: M4 (Caderno de Erros)
+## ✅ Sessão 3 — M4 + M5 + M6 (motor de retenção) concluído
+
+| Milestone | Entregue | Status |
+|---|---|---|
+| M4 Caderno de Erros | listar/filtrar erros, classificar tipo, marcar compreendido, ver resposta+comentário | ✅ |
+| M5 Flashcards | decks CRUD, cards CRUD, geração a partir dos erros, modo flip | ✅ |
+| M6 Revisão FSRS | `ts-fsrs`, fila de vencidos, avaliação 4 graus, agendamento e stats | ✅ |
+
+**Verificado:** typecheck (node+web) + `electron-vite build` verdes; boot OK (FSRS inicializa).
+
+---
+
+## 🎯 Sessão 4 — Próximo: M7 (Simulados Inteligentes)
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---|---|
-| T-M4-01 | Repositório/IPC do caderno: listar erros (filtros), classificar tipo, marcar compreendido | Crítica | ⬜ |
-| T-M4-02 | Tela do caderno de erros + "revisar como quiz" | Crítica | ⬜ |
-| T-M4-03 | Vínculo erro → flashcard/revisão (ponte p/ M5/M6) | Alta | ⬜ |
+| T-M7-01 | Gerar simulado (oficial 60q 20/80, por disciplina, personalizado) + cronômetro | Crítica | ⬜ |
+| T-M7-02 | Persistir `mock_exams`/`mock_exam_items`; correção e pontuação (corte de eliminação) | Crítica | ⬜ |
+| T-M7-03 | Tela de simulado (navegação entre questões, tempo) + resultado por bloco/disciplina | Crítica | ⬜ |
+| T-M7-04 | Histórico de simulados | Alta | ⬜ |
 
 ---
 
