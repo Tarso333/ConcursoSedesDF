@@ -7,6 +7,7 @@ import { CURRICULUM } from '../curriculum'
 import { SEED_QUESTIONS } from '../questions'
 import { SEED_QUESTIONS_BANK } from '../questionsBank'
 import { SEED_QUESTIONS_BANK_2 } from '../questionsBank2'
+import { SEDES_KNOWLEDGE } from './sedesKnowledge'
 
 export const SEDES_CONTEST: ContestSeed = {
   slug: 'sedes-df-2026',
@@ -26,5 +27,6 @@ export const SEDES_CONTEST: ContestSeed = {
     approvalTargetPct: 68
   },
   disciplines: CURRICULUM,
-  questions: [...SEED_QUESTIONS, ...SEED_QUESTIONS_BANK, ...SEED_QUESTIONS_BANK_2]
+  questions: [...SEED_QUESTIONS, ...SEED_QUESTIONS_BANK, ...SEED_QUESTIONS_BANK_2],
+  knowledge: SEDES_KNOWLEDGE
 }

@@ -2,6 +2,7 @@ import { HashRouter, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
 import { CadernoErros } from './routes/CadernoErros'
 import { Configuracoes } from './routes/Configuracoes'
+import { Conteudo } from './routes/Conteudo'
 import { Dashboard } from './routes/Dashboard'
 import { Estatisticas } from './routes/Estatisticas'
 import { Flashcards } from './routes/Flashcards'
@@ -19,6 +20,7 @@ export default function App(): JSX.Element {
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/conteudo" element={<Conteudo />} />
           <Route path="/questoes" element={<Questoes />} />
           <Route path="/simulados" element={<Simulados />} />
           <Route path="/flashcards" element={<Flashcards />} />

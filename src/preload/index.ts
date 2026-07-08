@@ -8,7 +8,8 @@ import type {
   MockAnswerInput,
   MockExamConfig,
   QuestionFilter,
-  ReviewRating
+  ReviewRating,
+  TopicStatus
 } from '@shared/domain'
 import { IPC, type AppApi, type ContestUpdateInput, type SettingsUpdateInput } from '@shared/ipc'
 
@@ -24,6 +25,10 @@ const api: AppApi = {
   getDisciplines: () => ipcRenderer.invoke(IPC.catalogDisciplines),
   getTopics: (disciplineId: number) => ipcRenderer.invoke(IPC.catalogTopics, disciplineId),
   getDisciplinesWithStats: () => ipcRenderer.invoke(IPC.catalogDisciplinesWithStats),
+  getContentTree: (disciplineId: number) => ipcRenderer.invoke(IPC.contentTree, disciplineId),
+  getTopicKnowledge: (topicId: number) => ipcRenderer.invoke(IPC.contentTopic, topicId),
+  setTopicStatus: (topicId: number, status: TopicStatus) =>
+    ipcRenderer.invoke(IPC.contentSetTopicStatus, topicId, status),
   getDashboardOverview: () => ipcRenderer.invoke(IPC.dashboardOverview),
   getPracticeQuestions: (filter: QuestionFilter, limit: number) =>
     ipcRenderer.invoke(IPC.questionsPractice, filter, limit),

@@ -8,7 +8,8 @@ import type {
   MockAnswerInput,
   MockExamConfig,
   QuestionFilter,
-  ReviewRating
+  ReviewRating,
+  TopicStatus
 } from '@shared/domain'
 import { IPC, type ContestUpdateInput, type SettingsUpdateInput } from '@shared/ipc'
 import { getDbPath } from '../db/connection'
@@ -39,6 +40,11 @@ import {
   resolveError,
   setErrorType
 } from '../repositories/errorRepository'
+import {
+  getContentTree,
+  getTopicKnowledge,
+  setTopicStatus
+} from '../repositories/knowledgeRepository'
 import {
   answerQuestion,
   countQuestions,
@@ -86,6 +92,13 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.catalogDisciplines, () => getDisciplines(getActiveContestId()))
   ipcMain.handle(IPC.catalogTopics, (_e, disciplineId: number) => getTopics(disciplineId))
   ipcMain.handle(IPC.catalogDisciplinesWithStats, () => getDisciplinesWithStats(getActiveContestId()))
+
+  // Engine de Conhecimento (M15)
+  ipcMain.handle(IPC.contentTree, (_e, disciplineId: number) => getContentTree(disciplineId))
+  ipcMain.handle(IPC.contentTopic, (_e, topicId: number) => getTopicKnowledge(topicId))
+  ipcMain.handle(IPC.contentSetTopicStatus, (_e, topicId: number, status: TopicStatus) =>
+    setTopicStatus(topicId, status)
+  )
 
   ipcMain.handle(IPC.dashboardOverview, () => getDashboardOverview(getActiveContest()))
 

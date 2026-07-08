@@ -91,9 +91,11 @@ ConcursoSedesDF/
 
 ## 5. Modelo de domínio (resumo)
 
-**Contest** (agregado central; `exam_config` descreve a prova) → **Discipline** (`contest_id`, bloco, peso) → **Topic** (hierárquico) → **Question** (+ **QuestionOption**).
+**Contest** (agregado central; `exam_config` descreve a prova; **Cargo** é atributo de identidade do concurso) → **Discipline** (`contest_id`, bloco, peso) → **Topic** (hierárquico via `parent_id` — subtópicos) → **Question** (+ **QuestionOption**) e **KnowledgeEntry** (blocos de conhecimento tipados por `kind`: resumo md, conceitos, legislação, jurisprudência, dicas, pegadinhas, palavras-chave, links/vídeos/PDFs — ADR-011).
 Progresso por concurso → **Answer**/**ErrorLog** (via questão), **Deck**/**Flashcard** + **SrsCard** (FSRS; deck tem `contest_id`), **MockExam**/**MockExamItem**, **StudyPlan**/**StudyTask**, **Goal**, **StudySession**, **AiMessage** (todos com `contest_id`).
 Do usuário (globais): **Settings** (perfil/preferências + concurso ativo) e **Gamification**/**Achievements** (constância é da pessoa, não do concurso).
+
+**Separação Conhecimento × Progresso (ADR-011):** conteúdo do edital (`knowledge_entries`, questões, flashcards) é imutável durante o estudo; o estado do usuário vive em entidades próprias (**TopicProgress** — status por tópico; `answers`/`error_logs`/`srs_cards` — desempenho), e métricas de acerto são sempre derivadas, nunca duplicadas.
 
 Detalhe físico em `src/main/db/schema.ts`; lógico no DER em [`DECISIONS.md`](./DECISIONS.md)/ROADMAP.
 

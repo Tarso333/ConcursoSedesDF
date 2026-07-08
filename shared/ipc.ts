@@ -35,7 +35,10 @@ import type {
   StatsOverview,
   StudyPlanView,
   ThemeMode,
-  Topic
+  Topic,
+  TopicKnowledgeView,
+  TopicStatus,
+  TopicTreeNode
 } from './domain'
 
 // Inputs de canal que vivem no domínio, re-exportados como parte do contrato.
@@ -53,6 +56,9 @@ export const IPC = {
   catalogDisciplines: 'catalog:disciplines',
   catalogTopics: 'catalog:topics',
   catalogDisciplinesWithStats: 'catalog:disciplinesWithStats',
+  contentTree: 'content:tree',
+  contentTopic: 'content:topic',
+  contentSetTopicStatus: 'content:setTopicStatus',
   dashboardOverview: 'dashboard:overview',
   questionsPractice: 'questions:practice',
   questionsCount: 'questions:count',
@@ -115,6 +121,10 @@ export interface AppApi {
   getDisciplines(): Promise<Discipline[]>
   getTopics(disciplineId: number): Promise<Topic[]>
   getDisciplinesWithStats(): Promise<DisciplineWithStats[]>
+  // Engine de Conhecimento (M15)
+  getContentTree(disciplineId: number): Promise<TopicTreeNode[]>
+  getTopicKnowledge(topicId: number): Promise<TopicKnowledgeView>
+  setTopicStatus(topicId: number, status: TopicStatus): Promise<void>
   getDashboardOverview(): Promise<DashboardOverview>
   getPracticeQuestions(filter: QuestionFilter, limit: number): Promise<QuestionForPractice[]>
   countQuestions(filter: QuestionFilter): Promise<number>

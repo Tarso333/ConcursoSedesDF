@@ -119,10 +119,36 @@ export const decks = sqliteTable('decks', {
 export const flashcards = sqliteTable('flashcards', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   deckId: integer('deck_id').notNull(),
+  topicId: integer('topic_id'), // classificação no conhecimento (opcional)
   front: text('front').notNull(),
   back: text('back').notNull(),
   sourceQuestionId: integer('source_question_id'),
   createdAt: createdAt()
+})
+
+// ───────── Engine de Conhecimento (M15) ─────────
+// Conteúdo do edital: blocos tipados por kind (imutável durante o estudo).
+export const knowledgeEntries = sqliteTable('knowledge_entries', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  topicId: integer('topic_id').notNull(),
+  kind: text('kind').notNull(),
+  title: text('title'),
+  body: text('body'),
+  reference: text('reference'),
+  url: text('url'),
+  orderIndex: integer('order_index').notNull().default(0),
+  createdAt: createdAt(),
+  updatedAt: text('updated_at').notNull().default(sql`(datetime('now'))`)
+})
+
+// Progresso do usuário por tópico — separado do conteúdo (DDD).
+export const topicProgress = sqliteTable('topic_progress', {
+  topicId: integer('topic_id').primaryKey(),
+  status: text('status', { enum: ['NAO_ESTUDADO', 'ESTUDANDO', 'REVISAR', 'DOMINADO'] })
+    .notNull()
+    .default('NAO_ESTUDADO'),
+  lastStudiedAt: text('last_studied_at'),
+  updatedAt: text('updated_at').notNull().default(sql`(datetime('now'))`)
 })
 
 export const srsCards = sqliteTable('srs_cards', {

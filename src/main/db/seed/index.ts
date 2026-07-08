@@ -4,6 +4,7 @@ import {
   contests,
   disciplines,
   gamification,
+  knowledgeEntries,
   questionOptions,
   questions,
   settings,
@@ -95,6 +96,49 @@ function seedContest(db: DB, seed: ContestSeed): void {
       seedQuestion(db, contestId, seed.slug, q)
     } catch (e) {
       console.error('[seed] questão ignorada:', q.statement.slice(0, 60), e)
+    }
+  }
+
+  // Conhecimento — idempotente por tópico: só semeia tópicos ainda sem
+  // conteúdo (edições/adições do usuário nunca são sobrescritas).
+  for (const block of seed.knowledge ?? []) {
+    try {
+      const disc = db
+        .select({ id: disciplines.id })
+        .from(disciplines)
+        .where(and(eq(disciplines.contestId, contestId), eq(disciplines.slug, block.disciplineSlug)))
+        .get()
+      if (!disc) continue
+      const topic = db
+        .select({ id: topics.id })
+        .from(topics)
+        .where(and(eq(topics.disciplineId, disc.id), eq(topics.name, block.topic)))
+        .get()
+      if (!topic) continue
+
+      const existing =
+        db
+          .select({ c: count() })
+          .from(knowledgeEntries)
+          .where(eq(knowledgeEntries.topicId, topic.id))
+          .get()?.c ?? 0
+      if (existing > 0) continue
+
+      block.entries.forEach((entry, i) => {
+        db.insert(knowledgeEntries)
+          .values({
+            topicId: topic.id,
+            kind: entry.kind,
+            title: entry.title ?? null,
+            body: entry.body ?? null,
+            reference: entry.reference ?? null,
+            url: entry.url ?? null,
+            orderIndex: i
+          })
+          .run()
+      })
+    } catch (e) {
+      console.error('[seed] conhecimento ignorado:', block.disciplineSlug, block.topic, e)
     }
   }
 }

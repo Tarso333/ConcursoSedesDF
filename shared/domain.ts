@@ -142,6 +142,73 @@ export interface AnswerResult {
   explanation: string | null
 }
 
+// ───────── Engine de Conhecimento (M15) ─────────
+// Conhecimento = conteúdo do edital (imutável durante o estudo).
+// Progresso = estado do usuário (entidades próprias; nunca mistura).
+//
+// KnowledgeEntry é um bloco de conteúdo tipado (padrão content-block):
+// adicionar um novo tipo = novo valor de `kind` + um renderizador na UI —
+// sem migration e sem alterar funcionalidades existentes (Open/Closed).
+export type KnowledgeKind =
+  | 'RESUMO' // corpo em markdown
+  | 'CONCEITO' // title = conceito, body = definição
+  | 'LEGISLACAO' // reference = dispositivo legal, body = teor/comentário
+  | 'JURISPRUDENCIA' // reference = tribunal/tese, body = entendimento
+  | 'DICA' // dica de prova
+  | 'PEGADINHA' // pegadinha comum da banca
+  | 'OBSERVACAO'
+  | 'PALAVRA_CHAVE' // title = termo
+  | 'LINK' // url + title
+  | 'VIDEO' // url + title
+  | 'PDF' // url/caminho + title
+  | 'MAPA_MENTAL' // reservado (futuro): body = estrutura do mapa
+
+export interface KnowledgeEntry {
+  id: number
+  topicId: number
+  kind: KnowledgeKind
+  title: string | null
+  body: string | null // markdown
+  reference: string | null // referência normativa/fonte
+  url: string | null
+  orderIndex: number
+}
+
+export type TopicStatus = 'NAO_ESTUDADO' | 'ESTUDANDO' | 'REVISAR' | 'DOMINADO'
+
+export interface TopicTreeNode {
+  id: number
+  parentId: number | null
+  name: string
+  orderIndex: number
+  questionCount: number
+  flashcardCount: number
+  knowledgeCount: number
+  answeredCount: number
+  accuracy: number // 0..1 (derivada das respostas)
+  status: TopicStatus
+  children: TopicTreeNode[]
+}
+
+export interface TopicKnowledgeView {
+  topicId: number
+  topicName: string
+  parentName: string | null
+  disciplineId: number
+  disciplineName: string
+  disciplineColor: string
+  status: TopicStatus
+  lastStudiedAt: string | null
+  entries: KnowledgeEntry[]
+  stats: {
+    questionCount: number
+    answeredCount: number
+    correctCount: number
+    accuracy: number // 0..1
+    flashcardCount: number
+  }
+}
+
 // ───────── Caderno de erros (M4) ─────────
 export type ErrorType = 'CONTEUDO' | 'INTERPRETACAO' | 'DISTRACAO' | 'PEGADINHA' | 'CHUTE' | 'REVISAR'
 

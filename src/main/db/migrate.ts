@@ -350,11 +350,42 @@ SET seed_key = 'sedes-df-2026:' || seed_key
 WHERE seed_key IS NOT NULL AND seed_key NOT LIKE '%:%';
 `
 
+// v5 — Engine de Conhecimento: cada tópico vira um centro de conhecimento.
+// knowledge_entries = CONTEÚDO do edital (blocos tipados por `kind`; imutável
+// durante o estudo). topic_progress = PROGRESSO do usuário (entidade própria).
+// flashcards.topic_id liga memorização ao conhecimento sem quebrar decks.
+const MIGRATION_0005_KNOWLEDGE = /* sql */ `
+CREATE TABLE IF NOT EXISTS knowledge_entries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  topic_id INTEGER NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  title TEXT,
+  body TEXT,
+  reference TEXT,
+  url TEXT,
+  order_index INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_knowledge_topic_kind ON knowledge_entries(topic_id, kind);
+
+CREATE TABLE IF NOT EXISTS topic_progress (
+  topic_id INTEGER PRIMARY KEY REFERENCES topics(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'NAO_ESTUDADO',
+  last_studied_at TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+ALTER TABLE flashcards ADD COLUMN topic_id INTEGER REFERENCES topics(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_flashcards_topic ON flashcards(topic_id);
+`
+
 const MIGRATIONS: Migration[] = [
   { version: 1, name: 'init', up: MIGRATION_0001_INIT },
   { version: 2, name: 'question_states', up: MIGRATION_0002_QUESTION_STATES },
   { version: 3, name: 'question_seed_key', up: MIGRATION_0003_SEED_KEY },
-  { version: 4, name: 'contests', up: MIGRATION_0004_CONTESTS }
+  { version: 4, name: 'contests', up: MIGRATION_0004_CONTESTS },
+  { version: 5, name: 'knowledge_engine', up: MIGRATION_0005_KNOWLEDGE }
 ]
 
 export function runMigrations(sqlite: Database.Database): void {

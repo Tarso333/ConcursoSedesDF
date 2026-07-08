@@ -6,6 +6,7 @@ import {
   ClipboardCheck,
   LayoutDashboard,
   Layers,
+  Library,
   type LucideIcon,
   Rocket,
   RotateCcw,
@@ -28,8 +29,9 @@ export interface NavGroup {
 export const NAV_GROUPS: NavGroup[] = [
   { items: [{ to: '/', label: 'Dashboard', icon: LayoutDashboard }] },
   {
-    title: 'Treino',
+    title: 'Estudo',
     items: [
+      { to: '/conteudo', label: 'Conteúdo', icon: Library },
       { to: '/questoes', label: 'Banco de Questões', icon: BookOpen },
       { to: '/simulados', label: 'Simulados', icon: ClipboardCheck },
       { to: '/flashcards', label: 'Flashcards', icon: Layers },
