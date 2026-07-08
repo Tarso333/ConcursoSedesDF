@@ -66,6 +66,7 @@ import {
   getMockResult
 } from '../services/simuladoService'
 import { getStatsOverview } from '../services/statsService'
+import { getDailyPlan } from '../services/strategyService'
 
 // Padrão "Active Contest": o renderer nunca envia contestId. Cada handler
 // resolve o concurso ativo aqui e o injeta explicitamente nas camadas de
@@ -161,6 +162,11 @@ export function registerIpcHandlers(): void {
 
   // Modo Aprovação (M11)
   ipcMain.handle(IPC.approvalPlan, () => getApprovalPlan(getActiveContest()))
+
+  // Motor de Estratégia (M16)
+  ipcMain.handle(IPC.strategyDailyPlan, (_e, minutes?: number) =>
+    getDailyPlan(getActiveContest(), minutes)
+  )
 
   // Tutor IA (M12)
   ipcMain.handle(IPC.aiStatus, () => getAiStatus())

@@ -4,6 +4,7 @@ import {
   BookOpen,
   CalendarRange,
   ClipboardCheck,
+  Compass,
   LayoutDashboard,
   Layers,
   Library,
@@ -42,6 +43,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: 'Estratégia',
     items: [
+      { to: '/plano', label: 'Plano do Dia', icon: Compass },
       { to: '/estatisticas', label: 'Estatísticas', icon: BarChart3 },
       { to: '/planejamento', label: 'Planejamento', icon: CalendarRange },
       { to: '/metas', label: 'Metas & Conquistas', icon: Target },

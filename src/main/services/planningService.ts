@@ -4,6 +4,8 @@ import type { Contest, StudyPlanView, StudyTaskItem, StudyTaskType } from '@shar
 import { getDb } from '../db/connection'
 import { disciplines, studyPlans, studyTasks } from '../db/schema'
 import { getSettings } from '../repositories/settingsRepository'
+import { rankDisciplines } from '../strategy/engine'
+import { buildStrategyInput } from '../strategy/snapshot'
 
 const nowExpr = sql`(datetime('now'))` as unknown as string
 
@@ -88,24 +90,16 @@ export function generateStudyPlan(contest: Contest, dailyMinutes: number): Study
     .run()
   const planId = Number(planRes.lastInsertRowid)
 
-  const discs = db
-    .select({
-      id: disciplines.id,
-      name: disciplines.name,
-      weight: disciplines.weight,
-      est: disciplines.examQuestionEstimate
-    })
-    .from(disciplines)
-    .where(eq(disciplines.contestId, contest.id))
-    .orderBy(asc(disciplines.orderIndex))
-    .all()
-  if (discs.length === 0) throw new Error('Este concurso ainda não possui disciplinas cadastradas.')
+  // Fila ponderada pelo RANKING do Motor de Estratégia (M16): as disciplinas
+  // mais prioritárias (peso × incidência × desempenho × esquecimento…)
+  // aparecem mais vezes no cronograma — fonte única de verdade.
+  const ranked = rankDisciplines(buildStrategyInput(contest, dailyMinutes))
+  if (ranked.length === 0) throw new Error('Este concurso ainda não possui disciplinas cadastradas.')
 
-  // Fila ponderada: disciplinas de maior peso × incidência aparecem mais vezes.
   const queue: { id: number; name: string }[] = []
-  for (const d of discs) {
-    const reps = Math.max(1, Math.round((d.weight * d.est) / 4))
-    for (let i = 0; i < reps; i++) queue.push({ id: d.id, name: d.name })
+  for (const r of ranked) {
+    const reps = Math.max(1, Math.round(r.score / 20))
+    for (let i = 0; i < reps; i++) queue.push({ id: r.discipline.id, name: r.discipline.name })
   }
 
   const totalDays = Math.max(1, differenceInCalendarDays(parseISO(contest.examDate), today))

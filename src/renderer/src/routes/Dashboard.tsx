@@ -2,12 +2,14 @@ import {
   Activity,
   CalendarClock,
   CheckCircle2,
+  Compass,
   Flame,
   Target,
   TrendingUp,
   Trophy,
   XCircle
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import {
   Area,
   AreaChart,
@@ -103,6 +105,7 @@ const chartTooltipStyle = {
 export function Dashboard(): JSX.Element {
   const overview = useAsync(() => api.getDashboardOverview(), [])
   const disciplines = useAsync(() => api.getDisciplinesWithStats(), [])
+  const plan = useAsync(() => api.getDailyPlan(), [])
 
   if (overview.loading || disciplines.loading) return <Loading label="Montando seu painel…" />
   if (overview.error) return <ErrorState message={overview.error} />
@@ -228,6 +231,45 @@ export function Dashboard(): JSX.Element {
           accent="hsl(var(--accent))"
         />
       </div>
+
+      {/* Plano do dia (Motor de Estratégia) */}
+      {plan.data && plan.data.items.length > 0 ? (
+        <Card className="p-5">
+          <div className="flex items-center justify-between gap-3">
+            <CardHeader
+              title="Plano de hoje"
+              subtitle="Calculado pelo motor de estratégia — determinístico e explicável"
+              icon={<Compass size={16} />}
+            />
+            <Link
+              to="/plano"
+              className="shrink-0 rounded-lg border px-3 py-1.5 text-xs font-semibold transition hover:bg-muted"
+            >
+              Ver plano completo
+            </Link>
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            {plan.data.items.slice(0, 3).map((item, i) => (
+              <div key={item.id} className="rounded-lg border bg-background/40 p-3">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <span className="text-muted-foreground">{i + 1}.</span>
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: item.disciplineColor }}
+                  />
+                  <span className="truncate">{item.disciplineName}</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {item.activity === 'QUESTOES' && item.questionTarget
+                    ? `${item.questionTarget} questões (~${item.minutes} min)`
+                    : `${item.minutes} min`}
+                  {item.reasons[0] ? ` · ${item.reasons[0]}` : ''}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
 
       {/* Evolução */}
       <Card className="p-5">

@@ -1,4 +1,5 @@
-import { BarChart3, CheckCircle2, Target, TrendingDown, TrendingUp } from 'lucide-react'
+import { BarChart3, CheckCircle2, Compass, Target, TrendingDown, TrendingUp } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import {
   Area,
   AreaChart,
@@ -47,6 +48,7 @@ function ScoreList({ items, empty }: { items: DisciplineScore[]; empty: string }
 
 export function Estatisticas(): JSX.Element {
   const s = useAsync(() => api.getStatsOverview(), [])
+  const plan = useAsync(() => api.getDailyPlan(), [])
   if (s.loading || !s.data) return <Loading label="Calculando suas estatísticas…" />
   const d = s.data
 
@@ -172,6 +174,41 @@ export function Estatisticas(): JSX.Element {
           </div>
         </Card>
       </div>
+
+      {/* Ranking do Motor de Estratégia */}
+      {plan.data && plan.data.ranking.length > 0 ? (
+        <Card className="p-5">
+          <div className="flex items-center justify-between gap-3">
+            <CardHeader
+              title="Prioridades da estratégia"
+              subtitle="Ranking determinístico do motor — onde cada minuto rende mais"
+              icon={<Compass size={16} />}
+            />
+            <Link
+              to="/plano"
+              className="shrink-0 rounded-lg border px-3 py-1.5 text-xs font-semibold transition hover:bg-muted"
+            >
+              Plano do Dia
+            </Link>
+          </div>
+          <div className="mt-4 space-y-2.5">
+            {plan.data.ranking.slice(0, 6).map((r, i) => (
+              <div key={r.disciplineId} className="flex items-center gap-3">
+                <span className="w-4 shrink-0 text-xs font-bold text-muted-foreground">{i + 1}</span>
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: r.color }} />
+                <span className="w-56 shrink-0 truncate text-sm">{r.name}</span>
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full rounded-full" style={{ width: `${r.score}%`, backgroundColor: r.color }} />
+                </div>
+                <span className="w-10 shrink-0 text-right text-sm font-semibold tabular-nums">{r.score}</span>
+                <span className="hidden w-64 shrink-0 truncate text-xs text-muted-foreground xl:block">
+                  {r.topReason}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
     </div>
   )
 }

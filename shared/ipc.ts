@@ -8,6 +8,7 @@ import type {
   ApprovalPlan,
   Contest,
   ContestUpdateInput,
+  DailyPlan,
   DashboardOverview,
   Deck,
   DeckInput,
@@ -88,6 +89,7 @@ export const IPC = {
   planGenerate: 'plan:generate',
   planToggleTask: 'plan:toggleTask',
   approvalPlan: 'approval:plan',
+  strategyDailyPlan: 'strategy:dailyPlan',
   aiStatus: 'ai:status',
   aiHistory: 'ai:history',
   aiSend: 'ai:send',
@@ -162,6 +164,8 @@ export interface AppApi {
   toggleStudyTask(id: number): Promise<void>
   // Modo Aprovação (M11)
   getApprovalPlan(): Promise<ApprovalPlan>
+  // Motor de Estratégia (M16) — minutes omitido usa a meta diária do usuário
+  getDailyPlan(minutes?: number): Promise<DailyPlan>
   // Tutor IA (M12)
   getAiStatus(): Promise<AiStatus>
   getAiHistory(): Promise<AiMessageDTO[]>

@@ -9,6 +9,7 @@ import { Flashcards } from './routes/Flashcards'
 import { Metas } from './routes/Metas'
 import { ModoAprovacao } from './routes/ModoAprovacao'
 import { Planejamento } from './routes/Planejamento'
+import { PlanoDoDia } from './routes/PlanoDoDia'
 import { Questoes } from './routes/Questoes'
 import { Revisao } from './routes/Revisao'
 import { Simulados } from './routes/Simulados'
@@ -26,6 +27,7 @@ export default function App(): JSX.Element {
           <Route path="/flashcards" element={<Flashcards />} />
           <Route path="/revisao" element={<Revisao />} />
           <Route path="/erros" element={<CadernoErros />} />
+          <Route path="/plano" element={<PlanoDoDia />} />
           <Route path="/estatisticas" element={<Estatisticas />} />
           <Route path="/planejamento" element={<Planejamento />} />
           <Route path="/metas" element={<Metas />} />

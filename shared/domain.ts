@@ -373,6 +373,64 @@ export interface ApprovalPlan {
   actions: { label: string; detail: string; route: string }[]
 }
 
+// ───────── Motor de Estratégia de Estudos (M16) ─────────
+// Determinístico e 100% explicável: cada recomendação carrega o próprio
+// score decomposto em fatores (com justificativa legível por fator).
+export type PlanActivity = 'TEORIA' | 'QUESTOES' | 'REVISAO_FSRS'
+export type PlanPriority = 'MUITO_ALTA' | 'ALTA' | 'MEDIA' | 'BAIXA'
+
+export interface PlanFactorScore {
+  key: string
+  label: string
+  weight: number // peso do fator na fórmula (Σ = 100)
+  value: number // intensidade normalizada 0..1
+  points: number // contribuição = weight × value
+  reason: string | null // justificativa legível (quando saliente)
+}
+
+export interface DailyPlanItem {
+  id: string
+  activity: PlanActivity
+  disciplineId: number | null
+  disciplineName: string
+  disciplineColor: string
+  minutes: number
+  questionTarget: number | null // para QUESTOES: meta de questões
+  score: number // 0..100
+  priority: PlanPriority
+  reasons: string[]
+  factors: PlanFactorScore[] // decomposição completa do score
+  expectedImpact: string
+}
+
+export interface PlanRankingItem {
+  disciplineId: number
+  name: string
+  color: string
+  block: DisciplineBlock
+  score: number
+  priority: PlanPriority
+  activity: PlanActivity
+  topReason: string
+}
+
+export interface PlanForecast {
+  editalCoveragePct: number
+  projectedFinishDate: string | null // yyyy-mm-dd
+  finishBeforeExam: boolean | null
+  requiredDailyMinutes: number | null // p/ concluir antes da prova
+  daysUntilExam: number | null
+}
+
+export interface DailyPlan {
+  availableMinutes: number
+  totalPlannedMinutes: number
+  items: DailyPlanItem[]
+  ranking: PlanRankingItem[]
+  forecast: PlanForecast
+  generatedAt: string
+}
+
 // ───────── Tutor IA (M12) ─────────
 export interface AiMessageDTO {
   id: number
