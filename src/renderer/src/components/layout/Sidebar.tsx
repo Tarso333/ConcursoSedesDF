@@ -8,10 +8,13 @@ import { NAV_GROUPS } from './nav'
 
 export function Sidebar(): JSX.Element {
   const settings = useAppStore((s) => s.settings)
+  const contests = useAppStore((s) => s.contests)
+  const activeContest = useAppStore((s) => s.activeContest)
+  const setActiveContest = useAppStore((s) => s.setActiveContest)
   const setTheme = useAppStore((s) => s.setTheme)
   const theme = settings?.theme ?? 'dark'
-  const examDate = settings?.examDate ?? '2026-09-06'
-  const days = daysUntil(examDate)
+  const examDate = activeContest?.examDate ?? null
+  const days = examDate ? daysUntil(examDate) : null
 
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col border-r bg-surface">
@@ -19,9 +22,26 @@ export function Sidebar(): JSX.Element {
         <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
           <GraduationCap size={22} />
         </div>
-        <div className="leading-tight">
+        <div className="min-w-0 flex-1 leading-tight">
           <p className="text-sm font-bold tracking-tight">APROVA</p>
-          <p className="text-xs font-medium text-muted-foreground">SEDES DF 2026</p>
+          {contests.length > 1 ? (
+            <select
+              value={activeContest?.id ?? ''}
+              onChange={(e) => void setActiveContest(Number(e.target.value))}
+              className="w-full cursor-pointer truncate border-none bg-transparent p-0 text-xs font-medium text-muted-foreground outline-none"
+              title="Trocar de concurso"
+            >
+              {contests.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p className="truncate text-xs font-medium text-muted-foreground">
+              {activeContest?.name ?? '—'}
+            </p>
+          )}
         </div>
       </div>
 
@@ -63,11 +83,19 @@ export function Sidebar(): JSX.Element {
             <CalendarClock size={16} />
             <span className="text-xs font-semibold uppercase tracking-wide">Contagem regressiva</span>
           </div>
-          <p className="mt-1 text-2xl font-bold leading-none">
-            {days}
-            <span className="ml-1 text-sm font-medium text-muted-foreground">dias</span>
-          </p>
-          <p className="text-[11px] text-muted-foreground">Prova: {fmtDatePtBR(examDate)}</p>
+          {days != null && examDate ? (
+            <>
+              <p className="mt-1 text-2xl font-bold leading-none">
+                {days}
+                <span className="ml-1 text-sm font-medium text-muted-foreground">dias</span>
+              </p>
+              <p className="text-[11px] text-muted-foreground">Prova: {fmtDatePtBR(examDate)}</p>
+            </>
+          ) : (
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Data da prova não definida — ajuste em Configurações.
+            </p>
+          )}
         </div>
 
         <button

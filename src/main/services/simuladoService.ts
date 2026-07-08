@@ -1,7 +1,10 @@
 import { type SQL, and, desc, eq, inArray, sql } from 'drizzle-orm'
 import type {
+  Contest,
   DisciplineBlock,
+  ExamBlockConfig,
   MockAnswerInput,
+  MockBlockScore,
   MockExamConfig,
   MockExamResult,
   MockExamSession,
@@ -20,24 +23,26 @@ import {
   questions
 } from '../db/schema'
 import { nowSql } from '../lib/sqlDate'
+import { getContest } from '../repositories/contestRepository'
 import { awardForSimulado } from './gamificationService'
 
 const SECONDS_PER_QUESTION = 180
 
 function pickQuestionIds(opts: {
+  contestId: number
   block?: DisciplineBlock
   disciplineId?: number | null
   limit: number
 }): number[] {
   const db = getDb()
-  const conds: SQL[] = []
+  const conds: SQL[] = [eq(disciplines.contestId, opts.contestId)]
   if (opts.block) conds.push(eq(disciplines.block, opts.block))
   if (opts.disciplineId) conds.push(eq(questions.disciplineId, opts.disciplineId))
   return db
     .select({ id: questions.id })
     .from(questions)
     .innerJoin(disciplines, eq(questions.disciplineId, disciplines.id))
-    .where(conds.length ? and(...conds) : undefined)
+    .where(and(...conds))
     .orderBy(sql`RANDOM()`)
     .limit(Math.max(1, opts.limit))
     .all()
@@ -66,30 +71,35 @@ function simOptionsByQuestion(ids: number[]): Map<number, SimOption[]> {
   return map
 }
 
-export function createMockExam(config: MockExamConfig): MockExamSession {
+export function createMockExam(contest: Contest, config: MockExamConfig): MockExamSession {
   const db = getDb()
   let ids: number[] = []
   let title = 'Simulado'
   let timeLimitSec: number | null = null
 
   if (config.mode === 'OFICIAL') {
-    ids = [
-      ...pickQuestionIds({ block: 'GERAL', limit: 20 }),
-      ...pickQuestionIds({ block: 'ESPECIFICO', limit: 40 })
-    ]
-    title = 'Simulado Oficial Quadrix'
-    timeLimitSec = 180 * 60
+    const exam = contest.examConfig
+    if (!exam) throw new Error('Este concurso não possui a estrutura da prova oficial cadastrada.')
+    ids = exam.blocks.flatMap((b) =>
+      pickQuestionIds({ contestId: contest.id, block: b.block, limit: b.questions })
+    )
+    title = `Simulado Oficial ${contest.board ?? contest.name}`
+    timeLimitSec = exam.durationMin * 60
   } else if (config.mode === 'DISCIPLINA') {
     const n = config.totalQuestions ?? 20
-    ids = pickQuestionIds({ disciplineId: config.disciplineId ?? null, limit: n })
+    ids = pickQuestionIds({ contestId: contest.id, disciplineId: config.disciplineId ?? null, limit: n })
     const disc = config.disciplineId
-      ? db.select({ name: disciplines.name }).from(disciplines).where(eq(disciplines.id, config.disciplineId)).get()
+      ? db
+          .select({ name: disciplines.name })
+          .from(disciplines)
+          .where(eq(disciplines.id, config.disciplineId))
+          .get()
       : null
     title = disc ? `Simulado — ${disc.name}` : 'Simulado por disciplina'
     timeLimitSec = ids.length * SECONDS_PER_QUESTION
   } else {
     const n = config.totalQuestions ?? 20
-    ids = pickQuestionIds({ disciplineId: config.disciplineId ?? null, limit: n })
+    ids = pickQuestionIds({ contestId: contest.id, disciplineId: config.disciplineId ?? null, limit: n })
     title = config.mode === 'DIAGNOSTICO' ? 'Simulado diagnóstico' : 'Simulado personalizado'
     timeLimitSec = ids.length * SECONDS_PER_QUESTION
   }
@@ -99,6 +109,7 @@ export function createMockExam(config: MockExamConfig): MockExamSession {
   const examRes = db
     .insert(mockExams)
     .values({
+      contestId: contest.id,
       title,
       mode: config.mode,
       status: 'EM_ANDAMENTO',
@@ -162,6 +173,7 @@ export function getMockResult(examId: number): MockExamResult {
   const db = getDb()
   const exam = db.select().from(mockExams).where(eq(mockExams.id, examId)).get()
   if (!exam) throw new Error('Simulado não encontrado')
+  const examConfig = exam.contestId ? (getContest(exam.contestId)?.examConfig ?? null) : null
 
   const items = db
     .select({
@@ -198,24 +210,23 @@ export function getMockResult(examId: number): MockExamResult {
   let answered = 0
   let scorePoints = 0
   let maxPoints = 0
-  let geralPoints = 0
-  let geralMax = 0
-  let espPoints = 0
-  let espMax = 0
+  const byBlock = new Map<DisciplineBlock, { points: number; max: number }>()
   const byDisc = new Map<string, { name: string; color: string; correct: number; total: number }>()
+
   const resultItems = items.map((it) => {
     const isAnswered = it.selectedOptionId != null
     const isCorrect = it.isCorrect === true
     maxPoints += it.weight
-    if (it.block === 'GERAL') geralMax += it.weight
-    else espMax += it.weight
+    const blockAgg = byBlock.get(it.block) ?? { points: 0, max: 0 }
+    blockAgg.max += it.weight
     if (isAnswered) answered += 1
     if (isCorrect) {
       correct += 1
       scorePoints += it.weight
-      if (it.block === 'GERAL') geralPoints += it.weight
-      else espPoints += it.weight
+      blockAgg.points += it.weight
     }
+    byBlock.set(it.block, blockAgg)
+
     const d = byDisc.get(it.disciplineName) ?? {
       name: it.disciplineName,
       color: it.color,
@@ -225,6 +236,7 @@ export function getMockResult(examId: number): MockExamResult {
     d.total += 1
     if (isCorrect) d.correct += 1
     byDisc.set(it.disciplineName, d)
+
     return {
       questionId: it.questionId,
       disciplineName: it.disciplineName,
@@ -237,8 +249,21 @@ export function getMockResult(examId: number): MockExamResult {
     }
   })
 
-  const eliminated =
-    exam.mode === 'OFICIAL' && (geralPoints < geralMax * 0.5 || espPoints < espMax * 0.5)
+  // Pontuação por bloco derivada do exam_config do concurso (dados, não regra fixa).
+  const blockScores: MockBlockScore[] = (examConfig?.blocks ?? []).map((b: ExamBlockConfig) => {
+    const agg = byBlock.get(b.block) ?? { points: 0, max: 0 }
+    const belowCutoff = agg.max > 0 && agg.points < agg.max * (b.minScorePct / 100)
+    return {
+      block: b.block,
+      label: b.label,
+      points: agg.points,
+      max: agg.max,
+      minScorePct: b.minScorePct,
+      belowCutoff
+    }
+  })
+
+  const eliminated = exam.mode === 'OFICIAL' && blockScores.some((b) => b.belowCutoff)
 
   return {
     examId,
@@ -250,10 +275,7 @@ export function getMockResult(examId: number): MockExamResult {
     scorePoints,
     maxPoints,
     scorePct: maxPoints > 0 ? scorePoints / maxPoints : 0,
-    geralPoints,
-    geralMax,
-    espPoints,
-    espMax,
+    blockScores,
     eliminated,
     byDiscipline: [...byDisc.values()],
     items: resultItems
@@ -331,7 +353,7 @@ export function finishMockExam(examId: number, submitted: MockAnswerInput[]): Mo
   return result
 }
 
-export function getMockHistory(): MockHistoryItem[] {
+export function getMockHistory(contestId: number): MockHistoryItem[] {
   return getDb()
     .select({
       id: mockExams.id,
@@ -342,7 +364,7 @@ export function getMockHistory(): MockHistoryItem[] {
       finishedAt: mockExams.finishedAt
     })
     .from(mockExams)
-    .where(eq(mockExams.status, 'CONCLUIDO'))
+    .where(and(eq(mockExams.contestId, contestId), eq(mockExams.status, 'CONCLUIDO')))
     .orderBy(desc(mockExams.id))
     .all()
 }

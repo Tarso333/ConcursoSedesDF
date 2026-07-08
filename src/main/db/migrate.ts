@@ -260,20 +260,124 @@ ALTER TABLE questions ADD COLUMN seed_key TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_questions_seed_key ON questions(seed_key) WHERE seed_key IS NOT NULL;
 `
 
+// v4 — Plataforma multi-concurso: cria o agregado `contests`, migra o SEDES
+// como primeiro concurso cadastrado (preservando a data da prova configurada
+// pelo usuário), reconstrói `disciplines` com escopo por concurso
+// (UNIQUE(contest_id, slug)) e vincula as demais entidades ao concurso.
+// A estrutura da prova vira DADO (exam_config JSON) — nada de regra fixa.
+const SEDES_EXAM_CONFIG_JSON =
+  '{"durationMin":180,"blocks":[' +
+  '{"block":"GERAL","label":"Conhecimentos Gerais","questions":20,"weightPerQuestion":1,"minScorePct":50},' +
+  '{"block":"ESPECIFICO","label":"Conhecimentos Específicos","questions":40,"weightPerQuestion":2,"minScorePct":50}' +
+  '],"approvalTargetPct":68}'
+
+const MIGRATION_0004_CONTESTS = /* sql */ `
+CREATE TABLE IF NOT EXISTS contests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  slug TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  role TEXT,
+  board TEXT,
+  exam_date TEXT,
+  city TEXT,
+  salary TEXT,
+  benefits TEXT,
+  exam_config TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+INSERT INTO contests (slug, name, role, board, exam_date, city, salary, exam_config)
+SELECT
+  'sedes-df-2026',
+  'SEDES DF 2026',
+  'Técnico em Desenvolvimento e Assistência Social — Técnico Administrativo',
+  'Instituto Quadrix',
+  COALESCE((SELECT exam_date FROM settings WHERE id = 1), '2026-09-06'),
+  'Brasília/DF',
+  'R$ 4.320,16',
+  '${SEDES_EXAM_CONFIG_JSON}'
+WHERE NOT EXISTS (SELECT 1 FROM contests WHERE slug = 'sedes-df-2026');
+
+-- Rebuild de disciplines: ganha contest_id e unicidade composta (contest, slug).
+CREATE TABLE disciplines_new (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  contest_id INTEGER NOT NULL REFERENCES contests(id) ON DELETE CASCADE,
+  slug TEXT NOT NULL,
+  name TEXT NOT NULL,
+  block TEXT NOT NULL,
+  weight INTEGER NOT NULL DEFAULT 1,
+  exam_question_estimate INTEGER NOT NULL DEFAULT 0,
+  color TEXT NOT NULL DEFAULT '#6366f1',
+  order_index INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (contest_id, slug)
+);
+INSERT INTO disciplines_new (id, contest_id, slug, name, block, weight, exam_question_estimate, color, order_index, created_at)
+SELECT d.id, (SELECT id FROM contests WHERE slug = 'sedes-df-2026'),
+       d.slug, d.name, d.block, d.weight, d.exam_question_estimate, d.color, d.order_index, d.created_at
+FROM disciplines d;
+DROP TABLE disciplines;
+ALTER TABLE disciplines_new RENAME TO disciplines;
+CREATE INDEX IF NOT EXISTS idx_disciplines_contest ON disciplines(contest_id);
+
+-- Entidades com vínculo direto ao concurso (as demais herdam via disciplina/questão/deck).
+ALTER TABLE decks ADD COLUMN contest_id INTEGER REFERENCES contests(id);
+UPDATE decks SET contest_id = (SELECT id FROM contests WHERE slug = 'sedes-df-2026');
+ALTER TABLE mock_exams ADD COLUMN contest_id INTEGER REFERENCES contests(id);
+UPDATE mock_exams SET contest_id = (SELECT id FROM contests WHERE slug = 'sedes-df-2026');
+ALTER TABLE study_plans ADD COLUMN contest_id INTEGER REFERENCES contests(id);
+UPDATE study_plans SET contest_id = (SELECT id FROM contests WHERE slug = 'sedes-df-2026');
+ALTER TABLE goals ADD COLUMN contest_id INTEGER REFERENCES contests(id);
+UPDATE goals SET contest_id = (SELECT id FROM contests WHERE slug = 'sedes-df-2026');
+ALTER TABLE study_sessions ADD COLUMN contest_id INTEGER REFERENCES contests(id);
+UPDATE study_sessions SET contest_id = (SELECT id FROM contests WHERE slug = 'sedes-df-2026');
+ALTER TABLE ai_messages ADD COLUMN contest_id INTEGER REFERENCES contests(id);
+UPDATE ai_messages SET contest_id = (SELECT id FROM contests WHERE slug = 'sedes-df-2026');
+
+CREATE INDEX IF NOT EXISTS idx_decks_contest ON decks(contest_id);
+CREATE INDEX IF NOT EXISTS idx_mock_exams_contest ON mock_exams(contest_id);
+CREATE INDEX IF NOT EXISTS idx_study_plans_contest ON study_plans(contest_id);
+CREATE INDEX IF NOT EXISTS idx_study_sessions_contest ON study_sessions(contest_id);
+CREATE INDEX IF NOT EXISTS idx_ai_messages_contest ON ai_messages(contest_id);
+
+-- Concurso ativo do usuário.
+ALTER TABLE settings ADD COLUMN active_contest_id INTEGER;
+UPDATE settings SET active_contest_id = (SELECT id FROM contests WHERE slug = 'sedes-df-2026');
+
+-- Chaves de seed passam a ser namespaced por concurso.
+UPDATE questions
+SET seed_key = 'sedes-df-2026:' || seed_key
+WHERE seed_key IS NOT NULL AND seed_key NOT LIKE '%:%';
+`
+
 const MIGRATIONS: Migration[] = [
   { version: 1, name: 'init', up: MIGRATION_0001_INIT },
   { version: 2, name: 'question_states', up: MIGRATION_0002_QUESTION_STATES },
-  { version: 3, name: 'question_seed_key', up: MIGRATION_0003_SEED_KEY }
+  { version: 3, name: 'question_seed_key', up: MIGRATION_0003_SEED_KEY },
+  { version: 4, name: 'contests', up: MIGRATION_0004_CONTESTS }
 ]
 
 export function runMigrations(sqlite: Database.Database): void {
   const current = sqlite.pragma('user_version', { simple: true }) as number
   const pending = MIGRATIONS.filter((m) => m.version > current).sort((a, b) => a.version - b.version)
-  for (const migration of pending) {
-    const apply = sqlite.transaction(() => {
-      sqlite.exec(migration.up)
-      sqlite.pragma(`user_version = ${migration.version}`)
-    })
-    apply()
+  if (pending.length === 0) return
+
+  // FKs desligadas durante migrações (exigência do SQLite para rebuild seguro
+  // de tabelas referenciadas). Reativadas em seguida, com verificação.
+  sqlite.pragma('foreign_keys = OFF')
+  try {
+    for (const migration of pending) {
+      const apply = sqlite.transaction(() => {
+        sqlite.exec(migration.up)
+        sqlite.pragma(`user_version = ${migration.version}`)
+      })
+      apply()
+    }
+    const violations = sqlite.pragma('foreign_key_check') as unknown[]
+    if (Array.isArray(violations) && violations.length > 0) {
+      console.error('[migrate] foreign_key_check encontrou violações:', violations.slice(0, 5))
+    }
+  } finally {
+    sqlite.pragma('foreign_keys = ON')
   }
 }

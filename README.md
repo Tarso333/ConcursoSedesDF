@@ -1,8 +1,8 @@
-# APROVA SEDES DF
+# APROVA — Plataforma de Preparação para Concursos
 
-App desktop **offline-first** para maximizar a aprovação no concurso **SEDES DF 2026 (Instituto Quadrix)** — cargo **Técnico em Desenvolvimento e Assistência Social / Técnico Administrativo** (nível médio).
+App desktop **offline-first** e **multi-concurso**: cada concurso é cadastrado com seus próprios dados (cargo, banca, data, disciplinas, pesos, estrutura da prova) e todo o estudo é escopado por ele. O primeiro concurso cadastrado é o **SEDES DF 2026 (Instituto Quadrix)** — cargo Técnico em Desenvolvimento e Assistência Social / Técnico Administrativo.
 
-> Banco de questões, simulados no estilo oficial, flashcards com revisão espaçada (FSRS), caderno de erros, planejamento automático até a prova (06/09/2026), estatísticas de desempenho, gamificação e tutor de IA — tudo rodando localmente, sem servidor.
+> Banco de questões, simulados no formato oficial da banca, flashcards com revisão espaçada (FSRS), caderno de erros, planejamento automático até a prova, estatísticas de desempenho, gamificação e tutor de IA — tudo rodando localmente, sem servidor.
 
 ## Stack
 Electron · React · TypeScript · Vite (electron-vite) · Tailwind · Zustand · SQLite (better-sqlite3 + Drizzle) · Recharts · ts-fsrs.

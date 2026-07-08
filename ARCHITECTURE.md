@@ -8,7 +8,9 @@
 
 ## 1. Visão geral
 
-App **desktop multiplataforma, offline-first, mono-usuário**, cujo objetivo único é maximizar a aprovação no concurso **SEDES DF 2026 (Quadrix)** — ver [`PESQUISA.md`](./PESQUISA.md).
+App **desktop multiplataforma, offline-first, mono-usuário**: uma **plataforma universal de preparação para concursos públicos**. O domínio é orientado ao agregado central **Concurso** (`Contest`) — cada concurso carrega seus próprios dados (nome, cargo, banca, data, cidade, salário), a **estrutura da prova como dados** (`exam_config` JSON: blocos, contagens, pesos, cortes, duração) e todo o seu conteúdo/progresso (disciplinas, questões, simulados, flashcards, erros, planejamento). O **SEDES DF 2026 (Quadrix)** é o primeiro concurso cadastrado — ver [`PESQUISA.md`](./PESQUISA.md); adicionar outro concurso = cadastrar dados no registro de seed (`src/main/db/seed/contests/`), sem alterar código de funcionalidades (ADR-010).
+
+**Padrão Active Contest:** o renderer nunca envia `contestId`; os handlers IPC resolvem o concurso ativo (`settings.active_contest_id`) e o injetam explicitamente nos repositórios/serviços — as camadas de domínio são agnósticas ao concurso.
 
 - Sem servidor, sem nuvem, sem login: **todos os dados vivem localmente em SQLite** no perfil do usuário.
 - A IA (Tutor) é o **único** ponto que pode usar rede (provedor de LLM via chave do usuário); tudo o mais funciona 100% offline.
@@ -89,8 +91,9 @@ ConcursoSedesDF/
 
 ## 5. Modelo de domínio (resumo)
 
-Catálogo do edital → **Discipline** (bloco geral/específico, peso) → **Topic** (hierárquico) → **Question** (+ **QuestionOption**).
-Progresso do usuário → **Answer**, **ErrorLog** (caderno de erros), **Deck**/**Flashcard** + **SrsCard** (FSRS), **MockExam**/**MockExamItem** (simulados), **StudyPlan**/**StudyTask**, **Goal**, **StudySession**, **Settings**, **AiMessage**.
+**Contest** (agregado central; `exam_config` descreve a prova) → **Discipline** (`contest_id`, bloco, peso) → **Topic** (hierárquico) → **Question** (+ **QuestionOption**).
+Progresso por concurso → **Answer**/**ErrorLog** (via questão), **Deck**/**Flashcard** + **SrsCard** (FSRS; deck tem `contest_id`), **MockExam**/**MockExamItem**, **StudyPlan**/**StudyTask**, **Goal**, **StudySession**, **AiMessage** (todos com `contest_id`).
+Do usuário (globais): **Settings** (perfil/preferências + concurso ativo) e **Gamification**/**Achievements** (constância é da pessoa, não do concurso).
 
 Detalhe físico em `src/main/db/schema.ts`; lógico no DER em [`DECISIONS.md`](./DECISIONS.md)/ROADMAP.
 

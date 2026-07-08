@@ -10,7 +10,6 @@ function toDto(row: SettingsRow): Settings {
   return {
     userName: row.userName,
     theme: row.theme,
-    examDate: row.examDate,
     dailyGoalMinutes: row.dailyGoalMinutes,
     dailyGoalQuestions: row.dailyGoalQuestions,
     aiProvider: row.aiProvider,
@@ -34,7 +33,6 @@ export function updateSettings(input: SettingsUpdateInput): Settings {
   const patch: Partial<SettingsRow> = { updatedAt: sql`(datetime('now'))` as unknown as string }
   if (input.userName !== undefined) patch.userName = input.userName
   if (input.theme !== undefined) patch.theme = input.theme
-  if (input.examDate !== undefined) patch.examDate = input.examDate
   if (input.dailyGoalMinutes !== undefined) patch.dailyGoalMinutes = input.dailyGoalMinutes
   if (input.dailyGoalQuestions !== undefined) patch.dailyGoalQuestions = input.dailyGoalQuestions
   if (input.aiProvider !== undefined) patch.aiProvider = input.aiProvider

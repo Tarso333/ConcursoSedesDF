@@ -120,8 +120,17 @@ export function Dashboard(): JSX.Element {
           {greeting()}, {o.userName}.
         </h1>
         <p className="text-sm text-muted-foreground">
-          Faltam <span className="font-semibold text-foreground">{o.daysUntilExam} dias</span> para a
-          prova ({fmtDatePtBR(o.examDate)}). Específicos valem 80% da nota — foco neles.
+          {o.examDate ? (
+            <>
+              Faltam <span className="font-semibold text-foreground">{o.daysUntilExam} dias</span> para
+              a prova {o.contestName} ({fmtDatePtBR(o.examDate)}).
+            </>
+          ) : (
+            <>Preparação para {o.contestName}.</>
+          )}{' '}
+          {o.heavyBlockLabel && o.heavyBlockSharePct != null
+            ? `${o.heavyBlockLabel} vale ${o.heavyBlockSharePct}% da nota — foco nele.`
+            : 'Constância diária é o que aprova.'}
         </p>
       </div>
 
@@ -133,7 +142,9 @@ export function Dashboard(): JSX.Element {
           </div>
           <div className="mt-3">
             <p className="text-5xl font-extrabold leading-none">{o.daysUntilExam}</p>
-            <p className="mt-1 text-sm opacity-90">dias até 06/09/2026</p>
+            <p className="mt-1 text-sm opacity-90">
+              {o.examDate ? `dias até ${fmtDatePtBR(o.examDate)}` : 'data da prova não definida'}
+            </p>
           </div>
           <p className="mt-4 text-xs opacity-80">
             {o.daysUntilExam > 45
@@ -321,7 +332,9 @@ export function Dashboard(): JSX.Element {
         </div>
         {!hasActivity ? (
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            Dica: comece resolvendo questões dos específicos — eles valem o dobro na nota.
+            {o.heavyBlockLabel
+              ? `Dica: comece pelo bloco "${o.heavyBlockLabel}" — é o de maior peso na nota.`
+              : 'Dica: comece resolvendo questões das disciplinas de maior peso.'}
           </p>
         ) : null}
       </Card>

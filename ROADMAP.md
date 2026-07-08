@@ -67,6 +67,10 @@ Prioriza fraqueza × peso (top 6) com motivo por disciplina; estimativa de aprov
 ### M12 — IA Tutor ✅ (concluído 2026-06-23)
 `aiService` com provedor configurável (anthropic / openai-compatível) via chave do usuário; chat com histórico, sugestões e system prompt do concurso; degrada graciosamente sem chave. **Liga ao inserir a chave em Configurações.**
 
+### M14 — Plataforma multi-concurso ✅ (concluído 2026-06-24)
+Refatoração de arquitetura (ADR-010): agregado central **Contest** com `exam_config` (estrutura da prova como dados); padrão **Active Contest** (handlers resolvem e injetam o escopo; camadas de domínio agnósticas); `disciplines` e demais entidades vinculadas ao concurso (migração **v4** com rebuild seguro + backfill, **zero perda de dados** — verificado no banco real); seed vira **registro de concursos** (adicionar concurso = cadastrar dados); UI com textos/labels dinâmicos e seletor de concurso (aparece com >1). SEDES DF 2026 é o primeiro concurso cadastrado. Nenhuma funcionalidade, layout ou dado alterado.
+**Verificado:** typecheck (node+web) + build verdes; boot aplica v4; inspeção do banco: 18 disciplinas e 151 questões vinculadas, 17 respostas e 9 erros preservados, `foreign_key_check` limpo.
+
 ### M13 — Hardening & empacotamento ✅ (concluído 2026-06-23)
 **Backup export/import** do banco (.db) via diálogos nativos (com checkpoint do WAL e reinício no import); `electron-builder` (instalador NSIS Windows) com **autoria/propriedades em nome de Tarso Hebert** (`copyright` + `publisherName`); `npmRebuild: false` (usa o rebuild do @electron/rebuild).
 

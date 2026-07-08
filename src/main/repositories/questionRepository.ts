@@ -52,13 +52,14 @@ function buildConditions(filter: QuestionFilter): SQL[] {
   return conds
 }
 
-export function countQuestions(filter: QuestionFilter): number {
+export function countQuestions(contestId: number, filter: QuestionFilter): number {
   const db = getDb()
-  const conds = buildConditions(filter)
+  const conds = [eq(disciplines.contestId, contestId), ...buildConditions(filter)]
   const row = db
     .select({ c: count() })
     .from(questions)
-    .where(conds.length ? and(...conds) : undefined)
+    .innerJoin(disciplines, eq(questions.disciplineId, disciplines.id))
+    .where(and(...conds))
     .get()
   return row?.c ?? 0
 }
@@ -88,9 +89,13 @@ function optionsByQuestion(questionIds: number[]): Map<number, QuestionOption[]>
   return map
 }
 
-export function getPracticeQuestions(filter: QuestionFilter, limit: number): QuestionForPractice[] {
+export function getPracticeQuestions(
+  contestId: number,
+  filter: QuestionFilter,
+  limit: number
+): QuestionForPractice[] {
   const db = getDb()
-  const conds = buildConditions(filter)
+  const conds = [eq(disciplines.contestId, contestId), ...buildConditions(filter)]
 
   const rows = db
     .select({

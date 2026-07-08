@@ -1,14 +1,14 @@
 import { differenceInCalendarDays, parseISO } from 'date-fns'
-import type { ApprovalPlan, PriorityDiscipline } from '@shared/domain'
+import type { ApprovalPlan, Contest, PriorityDiscipline } from '@shared/domain'
 import { getDisciplinesWithStats } from '../repositories/catalogRepository'
-import { getSettings } from '../repositories/settingsRepository'
 import { getDashboardOverview } from './dashboardService'
 
-export function getApprovalPlan(): ApprovalPlan {
-  const stats = getDisciplinesWithStats()
-  const settings = getSettings()
-  const overview = getDashboardOverview()
-  const daysUntilExam = Math.max(0, differenceInCalendarDays(parseISO(settings.examDate), new Date()))
+export function getApprovalPlan(contest: Contest): ApprovalPlan {
+  const stats = getDisciplinesWithStats(contest.id)
+  const overview = getDashboardOverview(contest)
+  const daysUntilExam = contest.examDate
+    ? Math.max(0, differenceInCalendarDays(parseISO(contest.examDate), new Date()))
+    : 0
 
   const focus: PriorityDiscipline[] = stats
     .map((d) => {
@@ -37,7 +37,7 @@ export function getApprovalPlan(): ApprovalPlan {
     .sort((a, b) => b.priorityScore - a.priorityScore)
     .slice(0, 6)
 
-  const topName = focus[0]?.name ?? 'os conhecimentos específicos'
+  const topName = focus[0]?.name ?? 'as disciplinas de maior peso'
   const actions = [
     {
       label: 'Atacar as prioridades de hoje',

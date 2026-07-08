@@ -6,9 +6,26 @@ import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 const createdAt = () => text('created_at').notNull().default(sql`(datetime('now'))`)
 
-export const disciplines = sqliteTable('disciplines', {
+// Agregado central: cada concurso carrega seus dados e a estrutura da prova
+// como JSON (exam_config) — nenhuma regra fixa de concurso vive em código.
+export const contests = sqliteTable('contests', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   slug: text('slug').notNull().unique(),
+  name: text('name').notNull(),
+  role: text('role'),
+  board: text('board'),
+  examDate: text('exam_date'),
+  city: text('city'),
+  salary: text('salary'),
+  benefits: text('benefits'),
+  examConfig: text('exam_config'),
+  createdAt: createdAt()
+})
+
+export const disciplines = sqliteTable('disciplines', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  contestId: integer('contest_id').notNull(),
+  slug: text('slug').notNull(), // único por concurso: UNIQUE(contest_id, slug)
   name: text('name').notNull(),
   block: text('block', { enum: ['GERAL', 'ESPECIFICO'] }).notNull(),
   weight: integer('weight').notNull().default(1),
@@ -56,7 +73,9 @@ export const settings = sqliteTable('settings', {
   id: integer('id').primaryKey(),
   userName: text('user_name').notNull().default('Concurseiro(a)'),
   theme: text('theme', { enum: ['light', 'dark'] }).notNull().default('dark'),
+  // Legado (v1–v3): a data da prova migrou para contests.exam_date.
   examDate: text('exam_date').notNull().default('2026-09-06'),
+  activeContestId: integer('active_contest_id'),
   dailyGoalMinutes: integer('daily_goal_minutes').notNull().default(180),
   dailyGoalQuestions: integer('daily_goal_questions').notNull().default(30),
   aiProvider: text('ai_provider'),
@@ -90,6 +109,7 @@ export const errorLogs = sqliteTable('error_logs', {
 
 export const decks = sqliteTable('decks', {
   id: integer('id').primaryKey({ autoIncrement: true }),
+  contestId: integer('contest_id'),
   name: text('name').notNull(),
   disciplineId: integer('discipline_id'),
   description: text('description'),
@@ -135,6 +155,7 @@ export const srsReviews = sqliteTable('srs_reviews', {
 
 export const mockExams = sqliteTable('mock_exams', {
   id: integer('id').primaryKey({ autoIncrement: true }),
+  contestId: integer('contest_id'),
   title: text('title').notNull(),
   mode: text('mode', { enum: ['OFICIAL', 'DISCIPLINA', 'PERSONALIZADO', 'DIAGNOSTICO'] })
     .notNull()
@@ -160,6 +181,7 @@ export const mockExamItems = sqliteTable('mock_exam_items', {
 
 export const studyPlans = sqliteTable('study_plans', {
   id: integer('id').primaryKey({ autoIncrement: true }),
+  contestId: integer('contest_id'),
   name: text('name').notNull(),
   startDate: text('start_date').notNull(),
   examDate: text('exam_date').notNull(),
@@ -183,6 +205,7 @@ export const studyTasks = sqliteTable('study_tasks', {
 
 export const goals = sqliteTable('goals', {
   id: integer('id').primaryKey({ autoIncrement: true }),
+  contestId: integer('contest_id'),
   period: text('period', { enum: ['DIARIA', 'SEMANAL', 'MENSAL'] }).notNull(),
   metric: text('metric', { enum: ['QUESTOES', 'MINUTOS', 'ACERTOS'] }).notNull(),
   target: integer('target').notNull(),
@@ -194,6 +217,7 @@ export const goals = sqliteTable('goals', {
 
 export const studySessions = sqliteTable('study_sessions', {
   id: integer('id').primaryKey({ autoIncrement: true }),
+  contestId: integer('contest_id'),
   disciplineId: integer('discipline_id'),
   startedAt: text('started_at').notNull(),
   endedAt: text('ended_at'),
@@ -231,6 +255,7 @@ export const questionStates = sqliteTable('question_states', {
 
 export const aiMessages = sqliteTable('ai_messages', {
   id: integer('id').primaryKey({ autoIncrement: true }),
+  contestId: integer('contest_id'),
   role: text('role', { enum: ['user', 'assistant'] }).notNull(),
   content: text('content').notNull(),
   contextType: text('context_type'),

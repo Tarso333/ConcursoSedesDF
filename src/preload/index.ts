@@ -10,12 +10,17 @@ import type {
   QuestionFilter,
   ReviewRating
 } from '@shared/domain'
-import { IPC, type AppApi, type SettingsUpdateInput } from '@shared/ipc'
+import { IPC, type AppApi, type ContestUpdateInput, type SettingsUpdateInput } from '@shared/ipc'
 
 const api: AppApi = {
   getInfo: () => ipcRenderer.invoke(IPC.appGetInfo),
   getSettings: () => ipcRenderer.invoke(IPC.settingsGet),
   updateSettings: (input: SettingsUpdateInput) => ipcRenderer.invoke(IPC.settingsUpdate, input),
+  listContests: () => ipcRenderer.invoke(IPC.contestsList),
+  getActiveContest: () => ipcRenderer.invoke(IPC.contestGetActive),
+  setActiveContest: (id: number) => ipcRenderer.invoke(IPC.contestSetActive, id),
+  updateContest: (id: number, input: ContestUpdateInput) =>
+    ipcRenderer.invoke(IPC.contestUpdate, id, input),
   getDisciplines: () => ipcRenderer.invoke(IPC.catalogDisciplines),
   getTopics: (disciplineId: number) => ipcRenderer.invoke(IPC.catalogTopics, disciplineId),
   getDisciplinesWithStats: () => ipcRenderer.invoke(IPC.catalogDisciplinesWithStats),

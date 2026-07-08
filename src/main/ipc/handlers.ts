@@ -10,13 +10,20 @@ import type {
   QuestionFilter,
   ReviewRating
 } from '@shared/domain'
-import { IPC, type SettingsUpdateInput } from '@shared/ipc'
+import { IPC, type ContestUpdateInput, type SettingsUpdateInput } from '@shared/ipc'
 import { getDbPath } from '../db/connection'
 import {
   getDisciplines,
   getDisciplinesWithStats,
   getTopics
 } from '../repositories/catalogRepository'
+import {
+  getActiveContest,
+  getActiveContestId,
+  listContests,
+  setActiveContest,
+  updateContest
+} from '../repositories/contestRepository'
 import {
   createDeck,
   createFlashcard,
@@ -39,8 +46,8 @@ import {
   toggleFavorite
 } from '../repositories/questionRepository'
 import { getSettings, updateSettings } from '../repositories/settingsRepository'
-import { getApprovalPlan } from '../services/approvalService'
 import { clearAiHistory, getAiHistory, getAiStatus, sendAiMessage } from '../services/aiService'
+import { getApprovalPlan } from '../services/approvalService'
 import { exportBackup, importBackup } from '../services/backupService'
 import { getDashboardOverview } from '../services/dashboardService'
 import { getGamification } from '../services/gamificationService'
@@ -54,6 +61,9 @@ import {
 } from '../services/simuladoService'
 import { getStatsOverview } from '../services/statsService'
 
+// Padrão "Active Contest": o renderer nunca envia contestId. Cada handler
+// resolve o concurso ativo aqui e o injeta explicitamente nas camadas de
+// domínio — repositórios e serviços são agnósticos e recebem o escopo.
 export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.appGetInfo, () => ({
     version: app.getVersion(),
@@ -64,28 +74,40 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.settingsGet, () => getSettings())
   ipcMain.handle(IPC.settingsUpdate, (_e, input: SettingsUpdateInput) => updateSettings(input))
 
-  ipcMain.handle(IPC.catalogDisciplines, () => getDisciplines())
-  ipcMain.handle(IPC.catalogTopics, (_e, disciplineId: number) => getTopics(disciplineId))
-  ipcMain.handle(IPC.catalogDisciplinesWithStats, () => getDisciplinesWithStats())
-
-  ipcMain.handle(IPC.dashboardOverview, () => getDashboardOverview())
-
-  ipcMain.handle(IPC.questionsPractice, (_e, filter: QuestionFilter, limit: number) =>
-    getPracticeQuestions(filter, limit)
+  // Concursos
+  ipcMain.handle(IPC.contestsList, () => listContests())
+  ipcMain.handle(IPC.contestGetActive, () => getActiveContest())
+  ipcMain.handle(IPC.contestSetActive, (_e, id: number) => setActiveContest(id))
+  ipcMain.handle(IPC.contestUpdate, (_e, id: number, input: ContestUpdateInput) =>
+    updateContest(id, input)
   )
-  ipcMain.handle(IPC.questionsCount, (_e, filter: QuestionFilter) => countQuestions(filter))
+
+  // Catálogo
+  ipcMain.handle(IPC.catalogDisciplines, () => getDisciplines(getActiveContestId()))
+  ipcMain.handle(IPC.catalogTopics, (_e, disciplineId: number) => getTopics(disciplineId))
+  ipcMain.handle(IPC.catalogDisciplinesWithStats, () => getDisciplinesWithStats(getActiveContestId()))
+
+  ipcMain.handle(IPC.dashboardOverview, () => getDashboardOverview(getActiveContest()))
+
+  // Banco de questões
+  ipcMain.handle(IPC.questionsPractice, (_e, filter: QuestionFilter, limit: number) =>
+    getPracticeQuestions(getActiveContestId(), filter, limit)
+  )
+  ipcMain.handle(IPC.questionsCount, (_e, filter: QuestionFilter) =>
+    countQuestions(getActiveContestId(), filter)
+  )
   ipcMain.handle(IPC.questionsAnswer, (_e, input: AnswerInput) => answerQuestion(input))
   ipcMain.handle(IPC.questionsToggleFavorite, (_e, questionId: number) => toggleFavorite(questionId))
 
   // Caderno de erros (M4)
-  ipcMain.handle(IPC.errorsList, (_e, filter: ErrorFilter) => listErrors(filter))
-  ipcMain.handle(IPC.errorsStats, () => getErrorStats())
+  ipcMain.handle(IPC.errorsList, (_e, filter: ErrorFilter) => listErrors(getActiveContestId(), filter))
+  ipcMain.handle(IPC.errorsStats, () => getErrorStats(getActiveContestId()))
   ipcMain.handle(IPC.errorsSetType, (_e, id: number, errorType: ErrorType) => setErrorType(id, errorType))
   ipcMain.handle(IPC.errorsResolve, (_e, id: number) => resolveError(id))
 
   // Flashcards & decks (M5)
-  ipcMain.handle(IPC.decksList, () => listDecks())
-  ipcMain.handle(IPC.deckCreate, (_e, input: DeckInput) => createDeck(input))
+  ipcMain.handle(IPC.decksList, () => listDecks(getActiveContestId()))
+  ipcMain.handle(IPC.deckCreate, (_e, input: DeckInput) => createDeck(getActiveContestId(), input))
   ipcMain.handle(IPC.deckDelete, (_e, id: number) => deleteDeck(id))
   ipcMain.handle(IPC.flashcardsList, (_e, deckId: number) => listFlashcards(deckId))
   ipcMain.handle(IPC.flashcardCreate, (_e, input: FlashcardInput) => createFlashcard(input))
@@ -95,39 +117,43 @@ export function registerIpcHandlers(): void {
   )
 
   // Revisão espaçada / FSRS (M6)
-  ipcMain.handle(IPC.reviewDue, (_e, limit: number) => getDueCards(limit))
-  ipcMain.handle(IPC.reviewStats, () => getReviewStats())
+  ipcMain.handle(IPC.reviewDue, (_e, limit: number) => getDueCards(getActiveContestId(), limit))
+  ipcMain.handle(IPC.reviewStats, () => getReviewStats(getActiveContestId()))
   ipcMain.handle(IPC.reviewRate, (_e, srsCardId: number, rating: ReviewRating) =>
     rateCard(srsCardId, rating)
   )
 
   // Simulados (M7)
-  ipcMain.handle(IPC.simCreate, (_e, config: MockExamConfig) => createMockExam(config))
+  ipcMain.handle(IPC.simCreate, (_e, config: MockExamConfig) =>
+    createMockExam(getActiveContest(), config)
+  )
   ipcMain.handle(IPC.simFinish, (_e, examId: number, ans: MockAnswerInput[]) =>
     finishMockExam(examId, ans)
   )
-  ipcMain.handle(IPC.simHistory, () => getMockHistory())
+  ipcMain.handle(IPC.simHistory, () => getMockHistory(getActiveContestId()))
   ipcMain.handle(IPC.simResult, (_e, examId: number) => getMockResult(examId))
 
-  // Gamificação (M9)
+  // Gamificação (M9) — do usuário, global a todos os concursos
   ipcMain.handle(IPC.gamificationProgress, () => getGamification())
 
   // Estatísticas (M8)
-  ipcMain.handle(IPC.statsOverview, () => getStatsOverview())
+  ipcMain.handle(IPC.statsOverview, () => getStatsOverview(getActiveContest()))
 
   // Planejamento (M10)
-  ipcMain.handle(IPC.planGet, () => getStudyPlan())
-  ipcMain.handle(IPC.planGenerate, (_e, dailyMinutes: number) => generateStudyPlan(dailyMinutes))
+  ipcMain.handle(IPC.planGet, () => getStudyPlan(getActiveContest()))
+  ipcMain.handle(IPC.planGenerate, (_e, dailyMinutes: number) =>
+    generateStudyPlan(getActiveContest(), dailyMinutes)
+  )
   ipcMain.handle(IPC.planToggleTask, (_e, id: number) => toggleStudyTask(id))
 
   // Modo Aprovação (M11)
-  ipcMain.handle(IPC.approvalPlan, () => getApprovalPlan())
+  ipcMain.handle(IPC.approvalPlan, () => getApprovalPlan(getActiveContest()))
 
   // Tutor IA (M12)
   ipcMain.handle(IPC.aiStatus, () => getAiStatus())
-  ipcMain.handle(IPC.aiHistory, () => getAiHistory())
-  ipcMain.handle(IPC.aiSend, (_e, content: string) => sendAiMessage(content))
-  ipcMain.handle(IPC.aiClear, () => clearAiHistory())
+  ipcMain.handle(IPC.aiHistory, () => getAiHistory(getActiveContestId()))
+  ipcMain.handle(IPC.aiSend, (_e, content: string) => sendAiMessage(getActiveContest(), content))
+  ipcMain.handle(IPC.aiClear, () => clearAiHistory(getActiveContestId()))
 
   // Backup (M13)
   ipcMain.handle(IPC.backupExport, () => exportBackup())

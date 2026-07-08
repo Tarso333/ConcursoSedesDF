@@ -1,9 +1,9 @@
-import { count, eq, sql } from 'drizzle-orm'
+import { and, count, eq, sql } from 'drizzle-orm'
 import type { Discipline, DisciplineWithStats, Topic } from '@shared/domain'
 import { getDb } from '../db/connection'
 import { answers, disciplines, questions, topics } from '../db/schema'
 
-export function getDisciplines(): Discipline[] {
+export function getDisciplines(contestId: number): Discipline[] {
   const db = getDb()
   return db
     .select({
@@ -17,6 +17,7 @@ export function getDisciplines(): Discipline[] {
       orderIndex: disciplines.orderIndex
     })
     .from(disciplines)
+    .where(eq(disciplines.contestId, contestId))
     .orderBy(disciplines.orderIndex)
     .all()
 }
@@ -38,14 +39,16 @@ export function getTopics(disciplineId: number): Topic[] {
     .all()
 }
 
-export function getDisciplinesWithStats(): DisciplineWithStats[] {
+export function getDisciplinesWithStats(contestId: number): DisciplineWithStats[] {
   const db = getDb()
-  const base = getDisciplines()
+  const base = getDisciplines(contestId)
 
   const topicCounts = new Map<number, number>()
   for (const r of db
     .select({ disciplineId: topics.disciplineId, c: count() })
     .from(topics)
+    .innerJoin(disciplines, eq(topics.disciplineId, disciplines.id))
+    .where(eq(disciplines.contestId, contestId))
     .groupBy(topics.disciplineId)
     .all()) {
     topicCounts.set(r.disciplineId, r.c)
@@ -55,6 +58,8 @@ export function getDisciplinesWithStats(): DisciplineWithStats[] {
   for (const r of db
     .select({ disciplineId: questions.disciplineId, c: count() })
     .from(questions)
+    .innerJoin(disciplines, eq(questions.disciplineId, disciplines.id))
+    .where(eq(disciplines.contestId, contestId))
     .groupBy(questions.disciplineId)
     .all()) {
     questionCounts.set(r.disciplineId, r.c)
@@ -69,6 +74,7 @@ export function getDisciplinesWithStats(): DisciplineWithStats[] {
     })
     .from(answers)
     .innerJoin(questions, eq(answers.questionId, questions.id))
+    .innerJoin(disciplines, and(eq(questions.disciplineId, disciplines.id), eq(disciplines.contestId, contestId)))
     .groupBy(questions.disciplineId)
     .all()) {
     answerAgg.set(r.disciplineId, { answered: Number(r.answered), correct: Number(r.correct) })

@@ -3,9 +3,9 @@ import type { ErrorFilter, ErrorLogItem, ErrorStats, ErrorType } from '@shared/d
 import { getDb } from '../db/connection'
 import { disciplines, errorLogs, questions } from '../db/schema'
 
-export function listErrors(filter: ErrorFilter): ErrorLogItem[] {
+export function listErrors(contestId: number, filter: ErrorFilter): ErrorLogItem[] {
   const db = getDb()
-  const conds: SQL[] = []
+  const conds: SQL[] = [eq(disciplines.contestId, contestId)]
   if (filter.disciplineId) conds.push(eq(questions.disciplineId, filter.disciplineId))
   if (filter.status && filter.status !== 'TODOS') conds.push(eq(errorLogs.status, filter.status))
 
@@ -27,29 +27,34 @@ export function listErrors(filter: ErrorFilter): ErrorLogItem[] {
     .from(errorLogs)
     .innerJoin(questions, eq(errorLogs.questionId, questions.id))
     .innerJoin(disciplines, eq(questions.disciplineId, disciplines.id))
-    .where(conds.length ? and(...conds) : undefined)
+    .where(and(...conds))
     .orderBy(desc(errorLogs.createdAt))
     .all()
 }
 
-export function getErrorStats(): ErrorStats {
+export function getErrorStats(contestId: number): ErrorStats {
   const db = getDb()
-  const open = db.select({ c: count() }).from(errorLogs).where(eq(errorLogs.status, 'ABERTO')).get()
-  const resolved = db
-    .select({ c: count() })
-    .from(errorLogs)
-    .where(eq(errorLogs.status, 'COMPREENDIDO'))
-    .get()
+
+  const countByStatus = (status: 'ABERTO' | 'COMPREENDIDO'): number =>
+    db
+      .select({ c: count() })
+      .from(errorLogs)
+      .innerJoin(questions, eq(errorLogs.questionId, questions.id))
+      .innerJoin(disciplines, eq(questions.disciplineId, disciplines.id))
+      .where(and(eq(disciplines.contestId, contestId), eq(errorLogs.status, status)))
+      .get()?.c ?? 0
+
   const byDiscipline = db
     .select({ name: disciplines.name, color: disciplines.color, count: count() })
     .from(errorLogs)
     .innerJoin(questions, eq(errorLogs.questionId, questions.id))
     .innerJoin(disciplines, eq(questions.disciplineId, disciplines.id))
-    .where(eq(errorLogs.status, 'ABERTO'))
+    .where(and(eq(disciplines.contestId, contestId), eq(errorLogs.status, 'ABERTO')))
     .groupBy(disciplines.id)
     .orderBy(desc(count()))
     .all()
-  return { open: open?.c ?? 0, resolved: resolved?.c ?? 0, byDiscipline }
+
+  return { open: countByStatus('ABERTO'), resolved: countByStatus('COMPREENDIDO'), byDiscipline }
 }
 
 export function setErrorType(id: number, errorType: ErrorType): void {

@@ -27,6 +27,7 @@ import { api } from '../lib/api'
 import { cn } from '../lib/cn'
 import { fmtDatePtBR, pct } from '../lib/format'
 import { useAsync } from '../lib/useAsync'
+import { useAppStore } from '../stores/useAppStore'
 
 const selectCls =
   'rounded-lg border bg-background px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-ring'
@@ -42,13 +43,25 @@ function clock(totalSec: number): string {
 }
 
 const MODE_LABEL: Record<MockExamMode, string> = {
-  OFICIAL: 'Oficial Quadrix (60q)',
+  OFICIAL: 'Oficial',
   DISCIPLINA: 'Por disciplina',
   PERSONALIZADO: 'Personalizado',
   DIAGNOSTICO: 'Diagnóstico'
 }
 
 export function Simulados(): JSX.Element {
+  const activeContest = useAppStore((s) => s.activeContest)
+  const examCfg = activeContest?.examConfig ?? null
+  const oficialTotal = examCfg ? examCfg.blocks.reduce((s, b) => s + b.questions, 0) : null
+  const oficialLabel = `${MODE_LABEL.OFICIAL}${activeContest?.board ? ` ${activeContest.board}` : ''}${
+    oficialTotal ? ` (${oficialTotal}q)` : ''
+  }`
+  const oficialHint = examCfg
+    ? `${examCfg.blocks.map((b) => `${b.questions} ${b.label.toLowerCase()}`).join(' + ')}, ${
+        Math.round((examCfg.durationMin / 60) * 10) / 10
+      }h`
+    : 'formato oficial da banca'
+
   const [view, setView] = useState<'config' | 'exam' | 'result'>('config')
   const [mode, setMode] = useState<MockExamMode>('OFICIAL')
   const [disciplineId, setDisciplineId] = useState<number | null>(null)
@@ -136,10 +149,12 @@ export function Simulados(): JSX.Element {
                   mode === m ? 'border-primary bg-primary/10' : 'hover:bg-muted'
                 )}
               >
-                <span className="block font-semibold">{MODE_LABEL[m]}</span>
+                <span className="block font-semibold">
+                  {m === 'OFICIAL' ? oficialLabel : MODE_LABEL[m]}
+                </span>
                 <span className="text-xs text-muted-foreground">
                   {m === 'OFICIAL'
-                    ? '20 gerais + 40 específicos, 3h'
+                    ? oficialHint
                     : m === 'DISCIPLINA'
                       ? 'foco numa disciplina'
                       : 'você escolhe a quantidade'}
@@ -367,34 +382,25 @@ function ResultView({ result, onNew }: { result: MockExamResult; onNew: () => vo
           ) : null}
         </div>
 
-        {isOficial ? (
+        {isOficial && result.blockScores.length > 0 ? (
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <div>
-              <p className="mb-1 flex justify-between text-xs font-medium">
-                <span>Conhecimentos Gerais</span>
-                <span>
-                  {result.geralPoints}/{result.geralMax} pts
-                </span>
-              </p>
-              <ProgressBar
-                value={result.geralMax ? (result.geralPoints / result.geralMax) * 100 : 0}
-                color={result.geralPoints < result.geralMax * 0.5 ? 'hsl(var(--danger))' : 'hsl(var(--success))'}
-              />
-              <p className="mt-1 text-[11px] text-muted-foreground">corte: 50% (10 pts)</p>
-            </div>
-            <div>
-              <p className="mb-1 flex justify-between text-xs font-medium">
-                <span>Conhecimentos Específicos</span>
-                <span>
-                  {result.espPoints}/{result.espMax} pts
-                </span>
-              </p>
-              <ProgressBar
-                value={result.espMax ? (result.espPoints / result.espMax) * 100 : 0}
-                color={result.espPoints < result.espMax * 0.5 ? 'hsl(var(--danger))' : 'hsl(var(--success))'}
-              />
-              <p className="mt-1 text-[11px] text-muted-foreground">corte: 50% (40 pts)</p>
-            </div>
+            {result.blockScores.map((b) => (
+              <div key={b.block}>
+                <p className="mb-1 flex justify-between text-xs font-medium">
+                  <span>{b.label}</span>
+                  <span>
+                    {b.points}/{b.max} pts
+                  </span>
+                </p>
+                <ProgressBar
+                  value={b.max ? (b.points / b.max) * 100 : 0}
+                  color={b.belowCutoff ? 'hsl(var(--danger))' : 'hsl(var(--success))'}
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  corte: {b.minScorePct}% ({Math.ceil((b.minScorePct / 100) * b.max)} pts)
+                </p>
+              </div>
+            ))}
           </div>
         ) : null}
       </Card>

@@ -1,14 +1,21 @@
 import { eachDayOfInterval, format, subDays } from 'date-fns'
-import { count, eq, sql } from 'drizzle-orm'
-import type { DailyPoint, Difficulty, DisciplineScore, RadarPoint, StatsOverview } from '@shared/domain'
+import { and, count, eq, sql } from 'drizzle-orm'
+import type {
+  Contest,
+  DailyPoint,
+  Difficulty,
+  DisciplineScore,
+  RadarPoint,
+  StatsOverview
+} from '@shared/domain'
 import { getDb } from '../db/connection'
-import { answers, questions } from '../db/schema'
+import { answers, disciplines, questions } from '../db/schema'
 import { getDisciplinesWithStats } from '../repositories/catalogRepository'
 
-export function getStatsOverview(): StatsOverview {
+export function getStatsOverview(contest: Contest): StatsOverview {
   const db = getDb()
-  const stats = getDisciplinesWithStats()
-  const answered = stats.filter((d) => d.answeredCount > 0)
+  const stats = getDisciplinesWithStats(contest.id)
+  const answeredDiscs = stats.filter((d) => d.answeredCount > 0)
   const totalAnswered = stats.reduce((s, d) => s + d.answeredCount, 0)
   const totalCorrect = stats.reduce((s, d) => s + d.correctCount, 0)
   const accuracy = totalAnswered > 0 ? totalCorrect / totalAnswered : 0
@@ -21,6 +28,8 @@ export function getStatsOverview(): StatsOverview {
     })
     .from(answers)
     .innerJoin(questions, eq(answers.questionId, questions.id))
+    .innerJoin(disciplines, eq(questions.disciplineId, disciplines.id))
+    .where(eq(disciplines.contestId, contest.id))
     .groupBy(questions.difficulty)
     .all()
   const byDifficulty = (['FACIL', 'MEDIO', 'DIFICIL'] as Difficulty[]).map((d) => {
@@ -46,7 +55,9 @@ export function getStatsOverview(): StatsOverview {
       correct: sql<number>`COALESCE(SUM(CASE WHEN ${answers.isCorrect} THEN 1 ELSE 0 END), 0)`
     })
     .from(answers)
-    .where(sql`date(${answers.createdAt}) >= ${startStr}`)
+    .innerJoin(questions, eq(answers.questionId, questions.id))
+    .innerJoin(disciplines, eq(questions.disciplineId, disciplines.id))
+    .where(and(eq(disciplines.contestId, contest.id), sql`date(${answers.createdAt}) >= ${startStr}`))
     .groupBy(sql`date(${answers.createdAt})`)
     .all()) {
     dmap.set(r.day, { answered: Number(r.answered), correct: Number(r.correct) })
@@ -57,14 +68,28 @@ export function getStatsOverview(): StatsOverview {
     return { date: k, answered: a.answered, correct: a.correct, studyMinutes: 0 }
   })
 
-  const blocks = { GERAL: { a: 0, c: 0 }, ESPECIFICO: { a: 0, c: 0 } }
+  // Prontidão ponderada pela estrutura da prova (exam_config); sem estrutura,
+  // usa a acurácia geral.
+  const blockAcc = new Map<string, { a: number; c: number }>()
   for (const d of stats) {
-    blocks[d.block].a += d.answeredCount
-    blocks[d.block].c += d.correctCount
+    const agg = blockAcc.get(d.block) ?? { a: 0, c: 0 }
+    agg.a += d.answeredCount
+    agg.c += d.correctCount
+    blockAcc.set(d.block, agg)
   }
-  const accG = blocks.GERAL.a > 0 ? blocks.GERAL.c / blocks.GERAL.a : 0.35
-  const accE = blocks.ESPECIFICO.a > 0 ? blocks.ESPECIFICO.c / blocks.ESPECIFICO.a : 0.35
-  const readinessPct = Math.round((0.2 * accG + 0.8 * accE) * 100)
+  const exam = contest.examConfig
+  let readinessPct: number
+  if (exam && exam.blocks.length > 0) {
+    const maxPoints = exam.blocks.reduce((s, b) => s + b.questions * b.weightPerQuestion, 0) || 1
+    const weighted = exam.blocks.reduce((s, b) => {
+      const agg = blockAcc.get(b.block)
+      const acc = agg && agg.a > 0 ? agg.c / agg.a : 0.35
+      return s + acc * b.questions * b.weightPerQuestion
+    }, 0)
+    readinessPct = Math.round((weighted / maxPoints) * 100)
+  } else {
+    readinessPct = Math.round(accuracy * 100)
+  }
 
   const toScore = (d: (typeof stats)[number]): DisciplineScore => ({
     disciplineId: d.id,
@@ -82,7 +107,7 @@ export function getStatsOverview(): StatsOverview {
     radar,
     daily,
     readinessPct,
-    bestDisciplines: [...answered].sort((a, b) => b.accuracy - a.accuracy).slice(0, 5).map(toScore),
-    worstDisciplines: [...answered].sort((a, b) => a.accuracy - b.accuracy).slice(0, 5).map(toScore)
+    bestDisciplines: [...answeredDiscs].sort((a, b) => b.accuracy - a.accuracy).slice(0, 5).map(toScore),
+    worstDisciplines: [...answeredDiscs].sort((a, b) => a.accuracy - b.accuracy).slice(0, 5).map(toScore)
   }
 }

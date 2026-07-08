@@ -6,6 +6,8 @@ import type {
   AnswerResult,
   AppInfo,
   ApprovalPlan,
+  Contest,
+  ContestUpdateInput,
   DashboardOverview,
   Deck,
   DeckInput,
@@ -36,11 +38,18 @@ import type {
   Topic
 } from './domain'
 
+// Inputs de canal que vivem no domínio, re-exportados como parte do contrato.
+export type { ContestUpdateInput } from './domain'
+
 // Nomes de canais centralizados para evitar strings soltas.
 export const IPC = {
   appGetInfo: 'app:getInfo',
   settingsGet: 'settings:get',
   settingsUpdate: 'settings:update',
+  contestsList: 'contests:list',
+  contestGetActive: 'contests:getActive',
+  contestSetActive: 'contests:setActive',
+  contestUpdate: 'contests:update',
   catalogDisciplines: 'catalog:disciplines',
   catalogTopics: 'catalog:topics',
   catalogDisciplinesWithStats: 'catalog:disciplinesWithStats',
@@ -84,7 +93,6 @@ export const IPC = {
 export interface SettingsUpdateInput {
   userName?: string
   theme?: ThemeMode
-  examDate?: string
   dailyGoalMinutes?: number
   dailyGoalQuestions?: number
   aiProvider?: string | null
@@ -93,10 +101,17 @@ export interface SettingsUpdateInput {
 }
 
 // A interface exposta em window.api. Cada método mapeia 1:1 para um canal.
+// Observação de arquitetura: o renderer NUNCA envia contestId — o processo
+// main resolve o concurso ativo e escopa todas as consultas por ele.
 export interface AppApi {
   getInfo(): Promise<AppInfo>
   getSettings(): Promise<Settings>
   updateSettings(input: SettingsUpdateInput): Promise<Settings>
+  // Concursos
+  listContests(): Promise<Contest[]>
+  getActiveContest(): Promise<Contest>
+  setActiveContest(id: number): Promise<Contest>
+  updateContest(id: number, input: ContestUpdateInput): Promise<Contest>
   getDisciplines(): Promise<Discipline[]>
   getTopics(disciplineId: number): Promise<Topic[]>
   getDisciplinesWithStats(): Promise<DisciplineWithStats[]>

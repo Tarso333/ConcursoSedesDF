@@ -1,21 +1,25 @@
 import { addDays, differenceInCalendarDays, format, parseISO } from 'date-fns'
-import { asc, eq, sql } from 'drizzle-orm'
-import type { StudyPlanView, StudyTaskItem, StudyTaskType } from '@shared/domain'
+import { and, asc, eq, sql } from 'drizzle-orm'
+import type { Contest, StudyPlanView, StudyTaskItem, StudyTaskType } from '@shared/domain'
 import { getDb } from '../db/connection'
 import { disciplines, studyPlans, studyTasks } from '../db/schema'
 import { getSettings } from '../repositories/settingsRepository'
 
 const nowExpr = sql`(datetime('now'))` as unknown as string
 
-export function getStudyPlan(): StudyPlanView {
+export function getStudyPlan(contest: Contest): StudyPlanView {
   const db = getDb()
   const settings = getSettings()
-  const plan = db.select().from(studyPlans).where(eq(studyPlans.active, true)).get()
+  const plan = db
+    .select()
+    .from(studyPlans)
+    .where(and(eq(studyPlans.active, true), eq(studyPlans.contestId, contest.id)))
+    .get()
   if (!plan) {
     return {
       planId: null,
       startDate: format(new Date(), 'yyyy-MM-dd'),
-      examDate: settings.examDate,
+      examDate: contest.examDate ?? format(new Date(), 'yyyy-MM-dd'),
       dailyMinutes: settings.dailyGoalMinutes,
       totalTasks: 0,
       doneTasks: 0,
@@ -59,19 +63,25 @@ export function getStudyPlan(): StudyPlanView {
   }
 }
 
-export function generateStudyPlan(dailyMinutes: number): StudyPlanView {
+export function generateStudyPlan(contest: Contest, dailyMinutes: number): StudyPlanView {
   const db = getDb()
-  const settings = getSettings()
+  if (!contest.examDate) {
+    throw new Error('Defina a data da prova deste concurso (em Configurações) antes de gerar o plano.')
+  }
   const today = new Date()
   const startStr = format(today, 'yyyy-MM-dd')
 
-  db.update(studyPlans).set({ active: false }).where(eq(studyPlans.active, true)).run()
+  db.update(studyPlans)
+    .set({ active: false })
+    .where(and(eq(studyPlans.active, true), eq(studyPlans.contestId, contest.id)))
+    .run()
   const planRes = db
     .insert(studyPlans)
     .values({
+      contestId: contest.id,
       name: 'Plano até a prova',
       startDate: startStr,
-      examDate: settings.examDate,
+      examDate: contest.examDate,
       dailyMinutes,
       active: true
     })
@@ -86,8 +96,10 @@ export function generateStudyPlan(dailyMinutes: number): StudyPlanView {
       est: disciplines.examQuestionEstimate
     })
     .from(disciplines)
+    .where(eq(disciplines.contestId, contest.id))
     .orderBy(asc(disciplines.orderIndex))
     .all()
+  if (discs.length === 0) throw new Error('Este concurso ainda não possui disciplinas cadastradas.')
 
   // Fila ponderada: disciplinas de maior peso × incidência aparecem mais vezes.
   const queue: { id: number; name: string }[] = []
@@ -96,7 +108,7 @@ export function generateStudyPlan(dailyMinutes: number): StudyPlanView {
     for (let i = 0; i < reps; i++) queue.push({ id: d.id, name: d.name })
   }
 
-  const totalDays = Math.max(1, differenceInCalendarDays(parseISO(settings.examDate), today))
+  const totalDays = Math.max(1, differenceInCalendarDays(parseISO(contest.examDate), today))
   let qi = 0
   const teoriaMin = Math.round(dailyMinutes * 0.4)
   const revisaoMin = Math.round(dailyMinutes * 0.25)
@@ -126,7 +138,7 @@ export function generateStudyPlan(dailyMinutes: number): StudyPlanView {
     insertTask(null, date, 'REVISAO', 'Revisão espaçada (flashcards)', revisaoMin)
   }
 
-  return getStudyPlan()
+  return getStudyPlan(contest)
 }
 
 export function toggleStudyTask(id: number): void {

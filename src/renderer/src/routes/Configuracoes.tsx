@@ -30,10 +30,13 @@ function Field({
 
 export function Configuracoes(): JSX.Element {
   const settings = useAppStore((s) => s.settings)
+  const activeContest = useAppStore((s) => s.activeContest)
   const refreshSettings = useAppStore((s) => s.refreshSettings)
+  const refreshContests = useAppStore((s) => s.refreshContests)
   const info = useAsync(() => api.getInfo(), [])
 
   const [form, setForm] = useState<SettingsUpdateInput>({})
+  const [examDate, setExamDate] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [backupMsg, setBackupMsg] = useState('')
@@ -50,7 +53,6 @@ export function Configuracoes(): JSX.Element {
     if (settings) {
       setForm({
         userName: settings.userName,
-        examDate: settings.examDate,
         dailyGoalQuestions: settings.dailyGoalQuestions,
         dailyGoalMinutes: settings.dailyGoalMinutes,
         theme: settings.theme,
@@ -59,6 +61,10 @@ export function Configuracoes(): JSX.Element {
       })
     }
   }, [settings])
+
+  useEffect(() => {
+    setExamDate(activeContest?.examDate ?? '')
+  }, [activeContest])
 
   const set = <K extends keyof SettingsUpdateInput>(key: K, value: SettingsUpdateInput[K]): void => {
     setForm((f) => ({ ...f, [key]: value }))
@@ -70,6 +76,11 @@ export function Configuracoes(): JSX.Element {
     try {
       await api.updateSettings(form)
       await refreshSettings()
+      // A data da prova pertence ao concurso ativo, não às preferências.
+      if (activeContest && examDate && examDate !== (activeContest.examDate ?? '')) {
+        await api.updateContest(activeContest.id, { examDate })
+        await refreshContests()
+      }
       setSaved(true)
     } finally {
       setSaving(false)
@@ -86,7 +97,7 @@ export function Configuracoes(): JSX.Element {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="space-y-4 p-5">
-          <CardHeader title="Perfil & prova" />
+          <CardHeader title="Perfil & prova" subtitle={activeContest?.name} />
           <Field label="Seu nome">
             <input
               className={inputCls}
@@ -95,12 +106,18 @@ export function Configuracoes(): JSX.Element {
               placeholder="Como devo te chamar?"
             />
           </Field>
-          <Field label="Data da prova" hint="Usada na contagem regressiva e no planejamento">
+          <Field
+            label="Data da prova"
+            hint={`Do concurso ${activeContest?.name ?? 'ativo'} — usada na contagem regressiva e no planejamento`}
+          >
             <input
               type="date"
               className={inputCls}
-              value={form.examDate ?? ''}
-              onChange={(e) => set('examDate', e.target.value)}
+              value={examDate}
+              onChange={(e) => {
+                setExamDate(e.target.value)
+                setSaved(false)
+              }}
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
@@ -172,6 +189,17 @@ export function Configuracoes(): JSX.Element {
                 placeholder={settings?.hasAiKey ? '•••••••• (preencha para substituir)' : 'cole sua chave aqui'}
               />
             </Field>
+          </Card>
+
+          <Card className="space-y-2 p-5">
+            <CardHeader title="Concurso ativo" subtitle={activeContest?.name ?? '—'} />
+            <div className="grid gap-1 text-xs text-muted-foreground">
+              {activeContest?.role ? <p>Cargo: {activeContest.role}</p> : null}
+              {activeContest?.board ? <p>Banca: {activeContest.board}</p> : null}
+              {activeContest?.city ? <p>Cidade: {activeContest.city}</p> : null}
+              {activeContest?.salary ? <p>Salário: {activeContest.salary}</p> : null}
+              {activeContest?.benefits ? <p>Benefícios: {activeContest.benefits}</p> : null}
+            </div>
           </Card>
 
           <Card className="space-y-2 p-5">

@@ -12,6 +12,46 @@ export type GoalPeriod = 'DIARIA' | 'SEMANAL' | 'MENSAL'
 export type StudyTaskType = 'TEORIA' | 'QUESTOES' | 'REVISAO' | 'SIMULADO'
 export type ThemeMode = 'light' | 'dark'
 
+// ───────── Concurso (agregado central da plataforma) ─────────
+// Toda a estrutura da prova é DADO (exam_config), nunca regra fixa em código:
+// blocos, contagem de questões, peso por questão, cortes e duração.
+export interface ExamBlockConfig {
+  block: DisciplineBlock
+  label: string // rótulo exibido na UI (ex.: "Conhecimentos Gerais")
+  questions: number // nº de questões do bloco na prova oficial
+  weightPerQuestion: number // pontos por acerto no bloco
+  minScorePct: number // corte de eliminação do bloco (0..100)
+}
+
+export interface ExamConfig {
+  durationMin: number // duração da prova oficial em minutos
+  blocks: ExamBlockConfig[]
+  approvalTargetPct?: number // % da pontuação máxima estimada como "nota de aprovação"
+}
+
+export interface Contest {
+  id: number
+  slug: string
+  name: string
+  role: string | null // cargo
+  board: string | null // banca
+  examDate: string | null // ISO yyyy-mm-dd
+  city: string | null
+  salary: string | null
+  benefits: string | null
+  examConfig: ExamConfig | null
+}
+
+export interface ContestUpdateInput {
+  name?: string
+  role?: string | null
+  board?: string | null
+  examDate?: string | null
+  city?: string | null
+  salary?: string | null
+  benefits?: string | null
+}
+
 export interface Discipline {
   id: number
   slug: string
@@ -338,6 +378,17 @@ export interface MockDisciplineScore {
   total: number
 }
 
+// Pontuação por bloco calculada a partir do exam_config do concurso —
+// substitui os antigos campos fixos de "gerais/específicos".
+export interface MockBlockScore {
+  block: DisciplineBlock
+  label: string
+  points: number
+  max: number
+  minScorePct: number
+  belowCutoff: boolean
+}
+
 export interface MockExamResult {
   examId: number
   title: string
@@ -348,10 +399,7 @@ export interface MockExamResult {
   scorePoints: number
   maxPoints: number
   scorePct: number
-  geralPoints: number
-  geralMax: number
-  espPoints: number
-  espMax: number
+  blockScores: MockBlockScore[]
   eliminated: boolean
   byDiscipline: MockDisciplineScore[]
   items: MockResultItem[]
@@ -366,10 +414,11 @@ export interface MockHistoryItem {
   finishedAt: string | null
 }
 
+// Preferências do usuário (globais). Dados do concurso — inclusive a data da
+// prova — vivem no agregado Contest; aqui fica apenas o que é da pessoa.
 export interface Settings {
   userName: string
   theme: ThemeMode
-  examDate: string // ISO yyyy-mm-dd
   dailyGoalMinutes: number
   dailyGoalQuestions: number
   aiProvider: string | null
@@ -395,8 +444,14 @@ export interface DailyPoint {
 
 export interface DashboardOverview {
   userName: string
-  examDate: string
+  contestName: string
+  boardName: string | null
+  examDate: string | null
   daysUntilExam: number
+  // Bloco de maior peso total na prova (para o texto de foco na UI); null
+  // quando o concurso tem um único bloco ou não tem exam_config.
+  heavyBlockLabel: string | null
+  heavyBlockSharePct: number | null
   editalProgressPct: number
   totalQuestions: number
   answeredCount: number

@@ -1,10 +1,10 @@
 import { and, desc, eq, sql } from 'drizzle-orm'
 import type { Deck, DeckInput, Flashcard, FlashcardInput } from '@shared/domain'
 import { getDb } from '../db/connection'
-import { decks, errorLogs, flashcards, questions, srsCards } from '../db/schema'
+import { decks, disciplines, errorLogs, flashcards, questions, srsCards } from '../db/schema'
 import { nowSql } from '../lib/sqlDate'
 
-export function listDecks(): Deck[] {
+export function listDecks(contestId: number): Deck[] {
   const db = getDb()
   return db
     .select({
@@ -16,15 +16,17 @@ export function listDecks(): Deck[] {
       dueCount: sql<number>`(SELECT COUNT(*) FROM srs_cards s JOIN flashcards fc ON fc.id = s.flashcard_id WHERE fc.deck_id = ${decks.id} AND s.due <= datetime('now'))`
     })
     .from(decks)
+    .where(eq(decks.contestId, contestId))
     .orderBy(decks.name)
     .all()
 }
 
-export function createDeck(input: DeckInput): Deck {
+export function createDeck(contestId: number, input: DeckInput): Deck {
   const db = getDb()
   const res = db
     .insert(decks)
     .values({
+      contestId,
       name: input.name,
       disciplineId: input.disciplineId ?? null,
       description: input.description ?? null
@@ -76,6 +78,11 @@ export function deleteFlashcard(id: number): void {
 
 export function generateFlashcardsFromErrors(deckId: number, limit: number): { created: number } {
   const db = getDb()
+
+  // Os erros usados são sempre do concurso ao qual o deck pertence.
+  const deck = db.select({ contestId: decks.contestId }).from(decks).where(eq(decks.id, deckId)).get()
+  if (!deck?.contestId) return { created: 0 }
+
   const rows = db
     .select({
       questionId: questions.id,
@@ -87,8 +94,10 @@ export function generateFlashcardsFromErrors(deckId: number, limit: number): { c
     })
     .from(errorLogs)
     .innerJoin(questions, eq(errorLogs.questionId, questions.id))
+    .innerJoin(disciplines, eq(questions.disciplineId, disciplines.id))
     .where(
       and(
+        eq(disciplines.contestId, deck.contestId),
         eq(errorLogs.status, 'ABERTO'),
         sql`NOT EXISTS (SELECT 1 FROM flashcards fc WHERE fc.deck_id = ${deckId} AND fc.source_question_id = ${questions.id})`
       )

@@ -18,6 +18,7 @@ function Splash(): JSX.Element {
 export function AppLayout(): JSX.Element {
   const ready = useAppStore((s) => s.ready)
   const init = useAppStore((s) => s.init)
+  const activeContestId = useAppStore((s) => s.activeContest?.id ?? 0)
 
   useEffect(() => {
     void init()
@@ -29,7 +30,9 @@ export function AppLayout(): JSX.Element {
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
       <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-6xl animate-fade-in px-8 py-8">
+        {/* key por concurso: ao trocar o concurso ativo, todas as telas
+            remontam e recarregam seus dados já no novo escopo. */}
+        <div key={activeContestId} className="mx-auto w-full max-w-6xl animate-fade-in px-8 py-8">
           <Outlet />
         </div>
       </main>
