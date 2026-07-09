@@ -37,6 +37,7 @@ function makeInput(overrides: Partial<AnalyticsInput> = {}): AnalyticsInput {
     answers: [],
     reviews: [],
     activityDays: [],
+    relations: [],
     ...overrides
   }
 }

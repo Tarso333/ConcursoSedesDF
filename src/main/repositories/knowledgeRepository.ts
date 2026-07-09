@@ -1,10 +1,15 @@
 import { asc, count, eq, sql } from 'drizzle-orm'
 import type {
+  DisciplineGraphView,
+  GraphTreeNode,
   KnowledgeEntry,
   KnowledgeKind,
+  RelatedTopicRef,
+  TopicConnections,
   TopicKnowledgeView,
   TopicStatus,
-  TopicTreeNode
+  TopicTreeNode,
+  UnlockResult
 } from '@shared/domain'
 import { getDb } from '../db/connection'
 import {
@@ -16,7 +21,22 @@ import {
   topicProgress,
   topics
 } from '../db/schema'
+import {
+  dependentsOf,
+  type GraphEdge,
+  nextOf,
+  prerequisitesOf,
+  relatedOf,
+  sequenceEdges,
+  unlockedByMastering
+} from '../graph/engine'
 import { nowSql } from '../lib/sqlDate'
+import {
+  declaredMasteredSet,
+  listEdgesForContest,
+  listEdgesTouching,
+  resolveTopicRefs
+} from './relationRepository'
 
 /**
  * Árvore de tópicos/subtópicos de uma disciplina, com contadores de conteúdo
@@ -122,6 +142,47 @@ export function getContentTree(disciplineId: number): TopicTreeNode[] {
   return roots
 }
 
+/** Conexões do tópico no grafo, resolvidas para exibição (consome M18). */
+function connectionsOf(topicId: number): TopicConnections {
+  const edges = listEdgesTouching([topicId])
+  const prereq = prerequisitesOf(topicId, edges)
+  const deps = dependentsOf(topicId, edges)
+  const next = nextOf(topicId, edges)
+  const related = relatedOf(topicId, edges)
+
+  const ids = new Set<number>()
+  for (const e of prereq) ids.add(e.before)
+  for (const e of deps) ids.add(e.after)
+  for (const e of next) ids.add(e.target)
+  for (const r of related) ids.add(r.otherId)
+  const refs = resolveTopicRefs([...ids])
+
+  const toRef = (
+    id: number,
+    kind: RelatedTopicRef['kind'],
+    strength: number,
+    note: string | null | undefined
+  ): RelatedTopicRef | null => {
+    const base = refs.get(id)
+    return base ? { ...base, kind, strength, note: note ?? null } : null
+  }
+
+  return {
+    prerequisites: prereq
+      .map((e) => toRef(e.before, e.kind, e.strength, e.note))
+      .filter((r): r is RelatedTopicRef => r != null),
+    dependents: deps
+      .map((e) => toRef(e.after, e.kind, e.strength, e.note))
+      .filter((r): r is RelatedTopicRef => r != null),
+    next: next
+      .map((e) => toRef(e.target, e.kind, e.strength, e.note))
+      .filter((r): r is RelatedTopicRef => r != null),
+    related: related
+      .map((r) => toRef(r.otherId, r.edge.kind, r.edge.strength, r.edge.note))
+      .filter((r): r is RelatedTopicRef => r != null)
+  }
+}
+
 export function getTopicKnowledge(topicId: number): TopicKnowledgeView {
   const db = getDb()
 
@@ -188,6 +249,7 @@ export function getTopicKnowledge(topicId: number): TopicKnowledgeView {
     disciplineColor: topicRow.disciplineColor,
     status: progress?.status ?? 'NAO_ESTUDADO',
     lastStudiedAt: progress?.lastStudiedAt ?? null,
+    connections: connectionsOf(topicId),
     entries,
     stats: {
       questionCount,
@@ -199,8 +261,12 @@ export function getTopicKnowledge(topicId: number): TopicKnowledgeView {
   }
 }
 
-/** Progresso é do usuário: upsert em topic_progress, sem tocar no conteúdo. */
-export function setTopicStatus(topicId: number, status: TopicStatus): void {
+/**
+ * Progresso é do usuário: upsert em topic_progress, sem tocar no conteúdo.
+ * Ao DOMINAR um tópico, o grafo identifica automaticamente o que foi
+ * desbloqueado (pré-requisitos completos) — e devolve para a UI/estratégia.
+ */
+export function setTopicStatus(topicId: number, status: TopicStatus): UnlockResult {
   const db = getDb()
   const studiedAt = status === 'NAO_ESTUDADO' ? null : nowSql()
   db.insert(topicProgress)
@@ -210,6 +276,101 @@ export function setTopicStatus(topicId: number, status: TopicStatus): void {
       set: { status, lastStudiedAt: studiedAt, updatedAt: nowSql() }
     })
     .run()
+
+  if (status !== 'DOMINADO') return { unlocked: [] }
+
+  const contestRow = db
+    .select({ contestId: disciplines.contestId })
+    .from(topics)
+    .innerJoin(disciplines, eq(topics.disciplineId, disciplines.id))
+    .where(eq(topics.id, topicId))
+    .get()
+  if (!contestRow) return { unlocked: [] }
+
+  const edges = listEdgesForContest(contestRow.contestId)
+  const mastered = declaredMasteredSet(contestRow.contestId)
+  mastered.delete(topicId) // estado ANTES desta conquista
+  const unlockedIds = unlockedByMastering(topicId, mastered, edges)
+  const refs = resolveTopicRefs(unlockedIds)
+  const unlocked: RelatedTopicRef[] = unlockedIds.flatMap((id) => {
+    const base = refs.get(id)
+    if (!base) return []
+    const ref: RelatedTopicRef = { ...base, kind: 'PRE_REQUISITO', strength: 1, note: null }
+    return [ref]
+  })
+  return { unlocked }
+}
+
+/**
+ * Visualização do grafo como árvore navegável (arestas de sequência:
+ * pré-requisito/dependência/continuidade). Ciclos são protegidos por visita.
+ */
+export function getDisciplineGraph(disciplineId: number): DisciplineGraphView {
+  const db = getDb()
+  const topicRows = db
+    .select({ id: topics.id })
+    .from(topics)
+    .where(eq(topics.disciplineId, disciplineId))
+    .all()
+  const disciplineTopicIds = topicRows.map((t) => t.id)
+  const edges = listEdgesTouching(disciplineTopicIds)
+  const seq = sequenceEdges(edges)
+
+  const nodeIds = new Set<number>(seq.flatMap((e) => [e.before, e.after]))
+  const refs = resolveTopicRefs([...nodeIds])
+
+  const children = new Map<number, { after: number; kind: GraphEdge['kind']; strength: number }[]>()
+  const indegree = new Map<number, number>()
+  for (const e of seq) {
+    const list = children.get(e.before) ?? []
+    list.push({ after: e.after, kind: e.kind, strength: e.strength })
+    children.set(e.before, list)
+    indegree.set(e.after, (indegree.get(e.after) ?? 0) + 1)
+  }
+
+  const build = (
+    id: number,
+    kindFromParent: GraphEdge['kind'] | null,
+    strength: number,
+    visited: Set<number>
+  ): GraphTreeNode | null => {
+    const ref = refs.get(id)
+    if (!ref || visited.has(id)) return null
+    visited.add(id)
+    const kids = (children.get(id) ?? [])
+      .sort((a, b) => b.strength - a.strength || a.after - b.after)
+      .map((c) => build(c.after, c.kind, c.strength, visited))
+      .filter((n): n is GraphTreeNode => n != null)
+    return {
+      topicId: id,
+      name: ref.name,
+      disciplineId: ref.disciplineId,
+      disciplineName: ref.disciplineName,
+      status: ref.status,
+      kindFromParent,
+      strength,
+      children: kids
+    }
+  }
+
+  const visited = new Set<number>()
+  const roots: GraphTreeNode[] = []
+  const rootIds = [...nodeIds].filter((id) => (indegree.get(id) ?? 0) === 0).sort((a, b) => a - b)
+  for (const id of rootIds) {
+    const node = build(id, null, 0, visited)
+    if (node) roots.push(node)
+  }
+  // Ciclos puros (sem raiz): garante que nada fique de fora.
+  for (const id of [...nodeIds].sort((a, b) => a - b)) {
+    if (!visited.has(id)) {
+      const node = build(id, null, 0, visited)
+      if (node) roots.push(node)
+    }
+  }
+
+  const linked = new Set(edges.flatMap((e) => [e.source, e.target]))
+  const unlinkedCount = disciplineTopicIds.filter((id) => !linked.has(id)).length
+  return { roots, unlinkedCount }
 }
 
 /** Usado pelo seed para não duplicar conteúdo já cadastrado num tópico. */

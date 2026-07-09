@@ -380,12 +380,33 @@ ALTER TABLE flashcards ADD COLUMN topic_id INTEGER REFERENCES topics(id) ON DELE
 CREATE INDEX IF NOT EXISTS idx_flashcards_topic ON flashcards(topic_id);
 `
 
+// v6 — Relationship Engine: o edital vira um GRAFO. Relacionamentos tipados
+// entre tópicos (entidade própria, sem campos genéricos); consumidos por
+// Conhecimento (M15), Estratégia (M16) e Analytics (M17) — nenhuma engine é
+// dona do grafo.
+const MIGRATION_0006_RELATIONS = /* sql */ `
+CREATE TABLE IF NOT EXISTS topic_relations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  source_topic_id INTEGER NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
+  target_topic_id INTEGER NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  strength REAL NOT NULL DEFAULT 0.5,
+  bidirectional INTEGER NOT NULL DEFAULT 0,
+  note TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (source_topic_id, target_topic_id, kind)
+);
+CREATE INDEX IF NOT EXISTS idx_relations_source ON topic_relations(source_topic_id);
+CREATE INDEX IF NOT EXISTS idx_relations_target ON topic_relations(target_topic_id);
+`
+
 const MIGRATIONS: Migration[] = [
   { version: 1, name: 'init', up: MIGRATION_0001_INIT },
   { version: 2, name: 'question_states', up: MIGRATION_0002_QUESTION_STATES },
   { version: 3, name: 'question_seed_key', up: MIGRATION_0003_SEED_KEY },
   { version: 4, name: 'contests', up: MIGRATION_0004_CONTESTS },
-  { version: 5, name: 'knowledge_engine', up: MIGRATION_0005_KNOWLEDGE }
+  { version: 5, name: 'knowledge_engine', up: MIGRATION_0005_KNOWLEDGE },
+  { version: 6, name: 'topic_relations', up: MIGRATION_0006_RELATIONS }
 ]
 
 export function runMigrations(sqlite: Database.Database): void {

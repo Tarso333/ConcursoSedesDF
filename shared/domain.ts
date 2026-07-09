@@ -199,6 +199,7 @@ export interface TopicKnowledgeView {
   disciplineColor: string
   status: TopicStatus
   lastStudiedAt: string | null
+  connections: TopicConnections
   entries: KnowledgeEntry[]
   stats: {
     questionCount: number
@@ -431,6 +432,71 @@ export interface DailyPlan {
   generatedAt: string
 }
 
+// ───────── Relationship Engine / Grafo de Aprendizagem (M18) ─────────
+// O edital deixa de ser lista: tópicos se relacionam num grafo tipado.
+export type RelationKind =
+  | 'PRE_REQUISITO' // origem é pré-requisito do destino (origem → destino)
+  | 'DEPENDE_DE' // origem depende do destino (destino vem antes)
+  | 'COMPLEMENTA' // bidirecional
+  | 'ESTUDADO_JUNTO' // bidirecional
+  | 'SEMELHANTE' // bidirecional
+  | 'CONTINUIDADE' // destino é a continuação natural da origem
+  | 'REVISAO_RECOMENDADA' // ao estudar a origem, revisar o destino
+  | 'RELACIONADO' // conteúdo relacionado (bidirecional)
+
+export interface RelatedTopicRef {
+  topicId: number
+  name: string
+  disciplineId: number
+  disciplineName: string
+  disciplineColor: string
+  kind: RelationKind
+  strength: number // 0..1
+  note: string | null
+  status: TopicStatus
+}
+
+/** Conexões de um tópico, já resolvidas para exibição. */
+export interface TopicConnections {
+  prerequisites: RelatedTopicRef[] // o que estudar antes
+  dependents: RelatedTopicRef[] // o que este tópico destrava
+  next: RelatedTopicRef[] // próximos assuntos recomendados
+  related: RelatedTopicRef[] // complementares/semelhantes/relacionados
+}
+
+export interface UnlockResult {
+  unlocked: RelatedTopicRef[] // tópicos que ficaram prontos ao dominar este
+}
+
+/** Nó da árvore navegável do grafo (visualização). */
+export interface GraphTreeNode {
+  topicId: number
+  name: string
+  disciplineId: number
+  disciplineName: string
+  status: TopicStatus
+  kindFromParent: RelationKind | null
+  strength: number
+  children: GraphTreeNode[]
+}
+
+export interface DisciplineGraphView {
+  roots: GraphTreeNode[]
+  unlinkedCount: number // tópicos da disciplina ainda sem conexões
+}
+
+/** Métricas de grafo calculadas pelo Learning Analytics. */
+export interface GraphAnalytics {
+  mostConnected: { topicId: number; name: string; disciplineName: string; connections: number }[]
+  bottlenecks: { topicId: number; name: string; disciplineName: string; blocks: number }[]
+  chains: {
+    key: string
+    title: string
+    coveragePct: number
+    topics: { topicId: number; name: string; mastered: boolean }[]
+  }[]
+}
+
 // ───────── Learning Analytics Engine (M17) ─────────
 // Projeções DERIVADAS do event log (answers/srs_reviews/sessões/status).
 // Nada é cadastrado manualmente; tudo é recomputável por replay.
@@ -493,6 +559,7 @@ export interface TopicConfidenceRef {
 
 export interface LearningAnalytics {
   generatedAt: string
+  graph: GraphAnalytics
   indicators: AnalyticsIndicator[] // registro extensível (Open/Closed)
   rollingAccuracy: { windowDays: number; accuracy: number | null; answered: number }[]
   learningCurve: CurvePoint[] // domínio global por semana (replay)

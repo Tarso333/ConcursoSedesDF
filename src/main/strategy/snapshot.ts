@@ -6,8 +6,10 @@ import { and, count, eq, sql } from 'drizzle-orm'
 import type { Contest, DisciplineBlock } from '@shared/domain'
 import { getDb } from '../db/connection'
 import { answers, contests, disciplines, questions, topicProgress, topics } from '../db/schema'
+import { gatingEdges, readyTopics } from '../graph/engine'
 import { getDisciplinesWithStats } from '../repositories/catalogRepository'
-import { getDisciplineMastery } from '../services/analyticsService'
+import { listEdgesForContest } from '../repositories/relationRepository'
+import { getStrategySignals } from '../services/analyticsService'
 import { getReviewStats } from '../services/reviewService'
 import type { StrategyDisciplineInput, StrategyInput } from './engine'
 
@@ -46,7 +48,29 @@ export function buildStrategyInput(contest: Contest, availableMinutes: number): 
   const stats = getDisciplinesWithStats(contest.id)
   // Integração M17: o domínio usado na previsão vem do Learning Analytics
   // (modelo com recência + esquecimento), não da acurácia bruta.
-  const analyticsMastery = getDisciplineMastery(contest)
+  const signals = getStrategySignals(contest)
+  const analyticsMastery = signals.disciplineMastery
+
+  // Integração M18: alavancagem no grafo por disciplina — tópicos prontos
+  // (pré-requisitos dominados) + destravamentos pendentes.
+  const edges = listEdgesForContest(contest.id)
+  const gates = gatingEdges(edges)
+  const ready = readyTopics(signals.masteredTopics, edges)
+  const readyByDiscipline = new Map<number, number>()
+  for (const topicId of ready) {
+    const discId = signals.topicDisciplineById.get(topicId)
+    if (discId != null) readyByDiscipline.set(discId, (readyByDiscipline.get(discId) ?? 0) + 1)
+  }
+  const unlocksByDiscipline = new Map<number, number>()
+  for (const e of gates) {
+    if (signals.masteredTopics.has(e.before) || signals.masteredTopics.has(e.after)) continue
+    const discId = signals.topicDisciplineById.get(e.before)
+    if (discId != null) unlocksByDiscipline.set(discId, (unlocksByDiscipline.get(discId) ?? 0) + 1)
+  }
+  const maxLeverageRaw = Math.max(
+    1,
+    ...stats.map((d) => (readyByDiscipline.get(d.id) ?? 0) + (unlocksByDiscipline.get(d.id) ?? 0))
+  )
 
   // Desempenho recente (7d) × anterior (8–30d) — tendência de evolução.
   const recent = accuracyByDiscipline(contest.id, sql`date(${answers.createdAt}) >= date('now', '-7 day')`)
@@ -188,7 +212,18 @@ export function buildStrategyInput(contest: Contest, availableMinutes: number): 
       topicsRevisar: tAgg?.revisar ?? 0,
       difficultyIndex: difficulty.get(d.id) ?? 0.5,
       knowledgeCount: knowledge.get(d.id) ?? 0,
-      occurrenceCount: occurrences.get(slugById.get(d.id) ?? '') ?? 1
+      occurrenceCount: occurrences.get(slugById.get(d.id) ?? '') ?? 1,
+      graphLeverage: (() => {
+        const raw = (readyByDiscipline.get(d.id) ?? 0) + (unlocksByDiscipline.get(d.id) ?? 0)
+        return raw / maxLeverageRaw
+      })(),
+      graphReason: (() => {
+        const unlocks = unlocksByDiscipline.get(d.id) ?? 0
+        const readyCount = readyByDiscipline.get(d.id) ?? 0
+        if (unlocks > 0) return `concluir aqui destrava ${unlocks} tópico(s) no grafo`
+        if (readyCount > 0) return `${readyCount} tópico(s) com pré-requisitos prontos`
+        return null
+      })()
     }
   })
 

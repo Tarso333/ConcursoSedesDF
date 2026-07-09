@@ -29,6 +29,7 @@ const api: AppApi = {
   getTopicKnowledge: (topicId: number) => ipcRenderer.invoke(IPC.contentTopic, topicId),
   setTopicStatus: (topicId: number, status: TopicStatus) =>
     ipcRenderer.invoke(IPC.contentSetTopicStatus, topicId, status),
+  getDisciplineGraph: (disciplineId: number) => ipcRenderer.invoke(IPC.contentGraph, disciplineId),
   getDashboardOverview: () => ipcRenderer.invoke(IPC.dashboardOverview),
   getPracticeQuestions: (filter: QuestionFilter, limit: number) =>
     ipcRenderer.invoke(IPC.questionsPractice, filter, limit),

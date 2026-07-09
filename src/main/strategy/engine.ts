@@ -40,6 +40,8 @@ export interface StrategyDisciplineInput {
   difficultyIndex: number // 0..1 (mix de dificuldade do banco)
   knowledgeCount: number // blocos de conhecimento disponíveis
   occurrenceCount: number // em quantos concursos ativos a disciplina aparece
+  graphLeverage: number // 0..1 — alavancagem no grafo (prontos + destravamentos)
+  graphReason: string | null // justificativa legível vinda do grafo
 }
 
 export interface StrategyInput {
@@ -201,6 +203,11 @@ function buildFactors(): StrategyFactor[] {
         if (gap <= 0) return { value: 0, reason: null }
         return { value: clamp01(gap * 2), reason: 'bloco abaixo do corte de eliminação' }
       }
+    },
+    {
+      key: 'grafo',
+      label: 'Alavancagem no grafo',
+      compute: (d) => ({ value: clamp01(d.graphLeverage), reason: d.graphReason })
     }
   ]
 }

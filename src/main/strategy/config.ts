@@ -17,6 +17,7 @@ export interface StrategyConfig {
     dificuldade: number // dificuldade média das questões
     simulado: number // desempenho em simulados
     metaBloco: number // bloco abaixo do corte de eliminação (meta de aprovação)
+    grafo: number // alavancagem no grafo de aprendizagem (M18)
   }
   /** Limiar de score (0..100) de cada nível de prioridade. */
   priorities: { muitoAlta: number; alta: number; media: number }
@@ -42,18 +43,19 @@ export interface StrategyConfig {
 
 export const STRATEGY_CONFIG: StrategyConfig = {
   weights: {
-    peso: 14,
-    incidencia: 12,
-    urgencia: 12,
-    desempenho: 16,
-    cobertura: 8,
+    peso: 13,
+    incidencia: 11,
+    urgencia: 11,
+    desempenho: 14,
+    cobertura: 7,
     esquecimento: 10,
     dominio: 6,
     multiConcurso: 6,
     tendencia: 4,
     dificuldade: 3,
     simulado: 3,
-    metaBloco: 6
+    metaBloco: 6,
+    grafo: 6
   },
   priorities: { muitoAlta: 70, alta: 50, media: 32 },
   allocation: {

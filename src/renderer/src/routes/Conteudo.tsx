@@ -21,8 +21,11 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import type {
+  GraphTreeNode,
   KnowledgeEntry,
   KnowledgeKind,
+  RelatedTopicRef,
+  RelationKind,
   TopicStatus,
   TopicTreeNode
 } from '@shared/domain'
@@ -44,6 +47,18 @@ const STATUS_META: Record<TopicStatus, { label: string; color: string }> = {
   DOMINADO: { label: 'Dominado', color: 'hsl(var(--success))' }
 }
 const STATUS_ORDER: TopicStatus[] = ['NAO_ESTUDADO', 'ESTUDANDO', 'REVISAR', 'DOMINADO']
+
+// Rótulos dos tipos de relação do grafo (M18).
+const RELATION_LABEL: Record<RelationKind, string> = {
+  PRE_REQUISITO: 'pré-requisito',
+  DEPENDE_DE: 'depende de',
+  COMPLEMENTA: 'complementa',
+  ESTUDADO_JUNTO: 'estudar junto',
+  SEMELHANTE: 'semelhante',
+  CONTINUIDADE: 'continuação',
+  REVISAO_RECOMENDADA: 'revisar junto',
+  RELACIONADO: 'relacionado'
+}
 
 // ───────────────────── Registry de renderização por tipo ─────────────────────
 // Adicionar um novo tipo de conhecimento = uma entrada aqui (Open/Closed).
@@ -186,9 +201,56 @@ function TopicRow({
   )
 }
 
+// ───────────────────────── Conexões do grafo ─────────────────────────
+function ConnectionGroup({
+  title,
+  items,
+  onNavigate
+}: {
+  title: string
+  items: RelatedTopicRef[]
+  onNavigate: (topicId: number, disciplineId: number) => void
+}): JSX.Element | null {
+  if (items.length === 0) return null
+  return (
+    <div>
+      <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {items.map((r) => (
+          <button
+            key={`${r.kind}-${r.topicId}`}
+            type="button"
+            onClick={() => onNavigate(r.topicId, r.disciplineId)}
+            title={r.note ?? `${RELATION_LABEL[r.kind]} · ${r.disciplineName}`}
+            className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition hover:border-primary hover:text-primary"
+          >
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ backgroundColor: STATUS_META[r.status].color }}
+            />
+            {r.name}
+            <span className="text-[10px] text-muted-foreground">{RELATION_LABEL[r.kind]}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ───────────────────────── Painel do tópico ─────────────────────────
-function TopicPanel({ topicId, onChanged }: { topicId: number; onChanged: () => void }): JSX.Element {
+function TopicPanel({
+  topicId,
+  onChanged,
+  onNavigate
+}: {
+  topicId: number
+  onChanged: () => void
+  onNavigate: (topicId: number, disciplineId: number) => void
+}): JSX.Element {
   const view = useAsync(() => api.getTopicKnowledge(topicId), [topicId])
+  const [unlocked, setUnlocked] = useState<RelatedTopicRef[]>([])
 
   if (view.loading) return <Loading label="Abrindo o tópico…" />
   if (view.error) return <ErrorState message={view.error} />
@@ -196,11 +258,15 @@ function TopicPanel({ topicId, onChanged }: { topicId: number; onChanged: () => 
   const t = view.data
 
   const setStatus = async (status: TopicStatus): Promise<void> => {
-    await api.setTopicStatus(t.topicId, status)
+    const result = await api.setTopicStatus(t.topicId, status)
+    setUnlocked(result.unlocked)
     view.reload()
     onChanged()
   }
 
+  const conn = t.connections
+  const hasConnections =
+    conn.prerequisites.length + conn.dependents.length + conn.next.length + conn.related.length > 0
   const sections = groupByKind(t.entries)
 
   return (
@@ -248,6 +314,42 @@ function TopicPanel({ topicId, onChanged }: { topicId: number; onChanged: () => 
         ) : null}
       </Card>
 
+      {/* Desbloqueios do grafo ao dominar (M18) */}
+      {unlocked.length > 0 ? (
+        <Card className="border-success/40 bg-success/10 p-4">
+          <p className="text-sm font-semibold text-success">🔓 Conteúdo desbloqueado!</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Com este domínio, os pré-requisitos destes tópicos ficaram completos — eles sobem de
+            prioridade na estratégia:
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {unlocked.map((u) => (
+              <button
+                key={u.topicId}
+                type="button"
+                onClick={() => onNavigate(u.topicId, u.disciplineId)}
+                className="rounded-full border border-success/50 px-2.5 py-1 text-xs font-medium text-success transition hover:bg-success/15"
+              >
+                {u.name} <span className="opacity-70">· {u.disciplineName}</span>
+              </button>
+            ))}
+          </div>
+        </Card>
+      ) : null}
+
+      {/* Conexões do conhecimento (grafo — M18) */}
+      {hasConnections ? (
+        <Card className="space-y-3 p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <Landmark size={16} className="text-primary" /> Conexões do conhecimento
+          </div>
+          <ConnectionGroup title="Pré-requisitos" items={conn.prerequisites} onNavigate={onNavigate} />
+          <ConnectionGroup title="Assuntos relacionados" items={conn.related} onNavigate={onNavigate} />
+          <ConnectionGroup title="Próximos assuntos recomendados" items={conn.next} onNavigate={onNavigate} />
+          <ConnectionGroup title="Dependem deste tópico" items={conn.dependents} onNavigate={onNavigate} />
+        </Card>
+      ) : null}
+
       {sections.length === 0 ? (
         <Card className="p-6">
           <EmptyState icon={<Library size={26} />}>
@@ -263,16 +365,84 @@ function TopicPanel({ topicId, onChanged }: { topicId: number; onChanged: () => 
   )
 }
 
+// ───────────────────────── Árvore do grafo (visualização) ─────────────────────────
+function GraphNodeRow({
+  node,
+  depth,
+  homeDisciplineId,
+  selectedId,
+  onSelect
+}: {
+  node: GraphTreeNode
+  depth: number
+  homeDisciplineId: number
+  selectedId: number | null
+  onSelect: (topicId: number, disciplineId: number) => void
+}): JSX.Element {
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => onSelect(node.topicId, node.disciplineId)}
+        className={cn(
+          'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition',
+          selectedId === node.topicId ? 'bg-primary/12 text-primary' : 'hover:bg-muted'
+        )}
+        style={{ paddingLeft: `${10 + depth * 18}px` }}
+      >
+        {depth > 0 ? <span className="text-muted-foreground/60">└</span> : null}
+        <span
+          className="h-2 w-2 shrink-0 rounded-full"
+          style={{ backgroundColor: STATUS_META[node.status].color }}
+          title={STATUS_META[node.status].label}
+        />
+        <span className="min-w-0 flex-1 truncate">{node.name}</span>
+        {node.kindFromParent ? (
+          <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">
+            {RELATION_LABEL[node.kindFromParent]}
+          </span>
+        ) : null}
+        {node.disciplineId !== homeDisciplineId ? (
+          <span className="shrink-0 text-[9px] text-muted-foreground/70">{node.disciplineName}</span>
+        ) : null}
+      </button>
+      {node.children.map((child) => (
+        <GraphNodeRow
+          key={child.topicId}
+          node={child}
+          depth={depth + 1}
+          homeDisciplineId={homeDisciplineId}
+          selectedId={selectedId}
+          onSelect={onSelect}
+        />
+      ))}
+    </>
+  )
+}
+
 // ───────────────────────── Tela ─────────────────────────
 export function Conteudo(): JSX.Element {
   const [disciplineId, setDisciplineId] = useState<number | null>(null)
   const [topicId, setTopicId] = useState<number | null>(null)
+  const [viewMode, setViewMode] = useState<'lista' | 'grafo'>('lista')
 
   const disciplines = useAsync(() => api.getDisciplinesWithStats(), [])
   const tree = useAsync(
     () => (disciplineId ? api.getContentTree(disciplineId) : Promise.resolve([])),
     [disciplineId]
   )
+  const graph = useAsync(
+    () =>
+      disciplineId && viewMode === 'grafo'
+        ? api.getDisciplineGraph(disciplineId)
+        : Promise.resolve(null),
+    [disciplineId, viewMode]
+  )
+
+  const navigateTo = (tid: number, did: number): void => {
+    if (did !== disciplineId) setDisciplineId(did)
+    setTopicId(tid)
+  }
 
   const selectedDiscipline = (disciplines.data ?? []).find((d) => d.id === disciplineId) ?? null
 
@@ -331,30 +501,71 @@ export function Conteudo(): JSX.Element {
           <ArrowLeft size={16} /> Disciplinas
         </button>
         <span className="text-muted-foreground">/</span>
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: selectedDiscipline.color }} />
-          <h1 className="text-lg font-bold tracking-tight">{selectedDiscipline.name}</h1>
+          <h1 className="truncate text-lg font-bold tracking-tight">{selectedDiscipline.name}</h1>
+        </div>
+        <div className="flex shrink-0 gap-1 rounded-lg border p-0.5">
+          {(['lista', 'grafo'] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setViewMode(m)}
+              className={cn(
+                'rounded-md px-2.5 py-1 text-xs font-semibold capitalize transition',
+                viewMode === m ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
+              )}
+            >
+              {m}
+            </button>
+          ))}
         </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
         <Card className="max-h-[calc(100vh-12rem)] overflow-y-auto p-2">
-          {tree.loading ? (
-            <Loading label="Carregando tópicos…" />
-          ) : (tree.data ?? []).length === 0 ? (
-            <EmptyState icon={<Library size={22} />}>Sem tópicos cadastrados.</EmptyState>
+          {viewMode === 'lista' ? (
+            tree.loading ? (
+              <Loading label="Carregando tópicos…" />
+            ) : (tree.data ?? []).length === 0 ? (
+              <EmptyState icon={<Library size={22} />}>Sem tópicos cadastrados.</EmptyState>
+            ) : (
+              <div className="space-y-0.5">
+                {(tree.data ?? []).map((node) => (
+                  <TopicRow key={node.id} node={node} depth={0} selectedId={topicId} onSelect={setTopicId} />
+                ))}
+              </div>
+            )
+          ) : graph.loading ? (
+            <Loading label="Montando o grafo…" />
+          ) : !graph.data || graph.data.roots.length === 0 ? (
+            <EmptyState icon={<Landmark size={22} />}>
+              Nenhuma conexão mapeada nesta disciplina ainda.
+            </EmptyState>
           ) : (
             <div className="space-y-0.5">
-              {(tree.data ?? []).map((node) => (
-                <TopicRow key={node.id} node={node} depth={0} selectedId={topicId} onSelect={setTopicId} />
+              {graph.data.roots.map((node) => (
+                <GraphNodeRow
+                  key={node.topicId}
+                  node={node}
+                  depth={0}
+                  homeDisciplineId={selectedDiscipline.id}
+                  selectedId={topicId}
+                  onSelect={navigateTo}
+                />
               ))}
+              {graph.data.unlinkedCount > 0 ? (
+                <p className="px-2.5 pt-2 text-[10px] text-muted-foreground">
+                  + {graph.data.unlinkedCount} tópico(s) sem conexões mapeadas (veja na Lista)
+                </p>
+              ) : null}
             </div>
           )}
         </Card>
 
         <div className="min-w-0">
           {topicId ? (
-            <TopicPanel topicId={topicId} onChanged={() => tree.reload()} />
+            <TopicPanel topicId={topicId} onChanged={() => tree.reload()} onNavigate={navigateTo} />
           ) : (
             <Card className="p-8">
               <EmptyState icon={<BookOpen size={28} />}>

@@ -17,6 +17,7 @@ import {
   topicProgress,
   topics
 } from '../db/schema'
+import { listEdgesForContest } from '../repositories/relationRepository'
 import type { AnalyticsInput } from './engine'
 
 export function buildAnalyticsInput(contest: Contest): AnalyticsInput {
@@ -96,6 +97,7 @@ export function buildAnalyticsInput(contest: Contest): AnalyticsInput {
       source: a.source
     })),
     reviews: reviewRows.map((r) => ({ dayIso: r.dayIso, rating: r.rating })),
-    activityDays: [...activityDays].sort()
+    activityDays: [...activityDays].sort(),
+    relations: listEdgesForContest(contest.id)
   }
 }

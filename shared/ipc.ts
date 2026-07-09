@@ -10,6 +10,7 @@ import type {
   ContestUpdateInput,
   DailyPlan,
   DashboardOverview,
+  DisciplineGraphView,
   Deck,
   DeckInput,
   Discipline,
@@ -40,7 +41,8 @@ import type {
   Topic,
   TopicKnowledgeView,
   TopicStatus,
-  TopicTreeNode
+  TopicTreeNode,
+  UnlockResult
 } from './domain'
 
 // Inputs de canal que vivem no domínio, re-exportados como parte do contrato.
@@ -61,6 +63,7 @@ export const IPC = {
   contentTree: 'content:tree',
   contentTopic: 'content:topic',
   contentSetTopicStatus: 'content:setTopicStatus',
+  contentGraph: 'content:graph',
   dashboardOverview: 'dashboard:overview',
   questionsPractice: 'questions:practice',
   questionsCount: 'questions:count',
@@ -128,7 +131,9 @@ export interface AppApi {
   // Engine de Conhecimento (M15)
   getContentTree(disciplineId: number): Promise<TopicTreeNode[]>
   getTopicKnowledge(topicId: number): Promise<TopicKnowledgeView>
-  setTopicStatus(topicId: number, status: TopicStatus): Promise<void>
+  // Ao dominar um tópico, devolve o que foi desbloqueado no grafo (M18).
+  setTopicStatus(topicId: number, status: TopicStatus): Promise<UnlockResult>
+  getDisciplineGraph(disciplineId: number): Promise<DisciplineGraphView>
   getDashboardOverview(): Promise<DashboardOverview>
   getPracticeQuestions(filter: QuestionFilter, limit: number): Promise<QuestionForPractice[]>
   countQuestions(filter: QuestionFilter): Promise<number>

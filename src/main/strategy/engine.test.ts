@@ -35,6 +35,8 @@ function makeDiscipline(overrides: Partial<StrategyDisciplineInput> = {}): Strat
     difficultyIndex: 0.5,
     knowledgeCount: 0,
     occurrenceCount: 1,
+    graphLeverage: 0,
+    graphReason: null,
     ...overrides
   }
 }
@@ -127,10 +129,22 @@ describe('rankDisciplines', () => {
         tendencia: 0,
         dificuldade: 0,
         simulado: 0,
-        metaBloco: 0
+        metaBloco: 0,
+        grafo: 0
       }
     }
     expect(rankDisciplines(input, onlyWeight)[0].discipline.id).toBe(heavy.id)
+  })
+
+  it('alavancagem no grafo (M18) aumenta a prioridade com justificativa', () => {
+    const plain = makeDiscipline()
+    const leveraged = makeDiscipline({
+      graphLeverage: 1,
+      graphReason: 'concluir aqui destrava 3 tópico(s) no grafo'
+    })
+    const ranked = rankDisciplines(makeInput({ disciplines: [plain, leveraged] }))
+    expect(ranked[0].discipline.id).toBe(leveraged.id)
+    expect(ranked[0].reasons.join(' ')).toContain('destrava 3 tópico(s)')
   })
 
   it('score alto vira prioridade MUITO_ALTA; toda disciplina tem decomposição completa', () => {
@@ -140,7 +154,9 @@ describe('rankDisciplines', () => {
       daysSinceLastStudy: 20,
       weight: 2,
       examQuestionEstimate: 4,
-      topicsRevisar: 3
+      topicsRevisar: 3,
+      graphLeverage: 0.6,
+      graphReason: 'concluir aqui destrava 2 tópico(s) no grafo'
     })
     const ranked = rankDisciplines(
       makeInput({ daysUntilExam: 10, blockCutoffGap: { ESPECIFICO: 0.5 }, disciplines: [critical] })

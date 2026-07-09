@@ -141,6 +141,19 @@ export const knowledgeEntries = sqliteTable('knowledge_entries', {
   updatedAt: text('updated_at').notNull().default(sql`(datetime('now'))`)
 })
 
+// ───────── Relationship Engine (M18) ─────────
+// Grafo de aprendizagem: relacionamentos tipados entre tópicos.
+export const topicRelations = sqliteTable('topic_relations', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  sourceTopicId: integer('source_topic_id').notNull(),
+  targetTopicId: integer('target_topic_id').notNull(),
+  kind: text('kind').notNull(),
+  strength: real('strength').notNull().default(0.5),
+  bidirectional: integer('bidirectional', { mode: 'boolean' }).notNull().default(false),
+  note: text('note'),
+  createdAt: createdAt()
+})
+
 // Progresso do usuário por tópico — separado do conteúdo (DDD).
 export const topicProgress = sqliteTable('topic_progress', {
   topicId: integer('topic_id').primaryKey(),

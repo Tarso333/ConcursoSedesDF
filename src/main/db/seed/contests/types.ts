@@ -1,6 +1,21 @@
-import type { ExamConfig, KnowledgeKind } from '@shared/domain'
+import type { ExamConfig, KnowledgeKind, RelationKind } from '@shared/domain'
 import type { SeedDiscipline } from '../curriculum'
 import type { SeedQuestion } from '../questions'
+
+/** Referência a um tópico no seed (disciplina + nome exato do tópico). */
+export interface SeedTopicRef {
+  disciplineSlug: string
+  topic: string
+}
+
+/** Relação do grafo de aprendizagem a semear (fortemente tipada). */
+export interface SeedRelation {
+  from: SeedTopicRef
+  to: SeedTopicRef
+  kind: RelationKind
+  strength?: number // 0..1 (padrão 0.5)
+  note?: string
+}
 
 /** Um bloco de conhecimento a semear num tópico. */
 export interface SeedKnowledgeEntry {
@@ -32,4 +47,5 @@ export interface ContestSeed {
   disciplines: SeedDiscipline[]
   questions: SeedQuestion[]
   knowledge?: SeedTopicKnowledge[]
+  relations?: SeedRelation[]
 }

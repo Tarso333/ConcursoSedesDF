@@ -204,6 +204,74 @@ export function LearningAnalyticsSection(): JSX.Element {
         </div>
       </Card>
 
+      {/* Grafo de aprendizagem (M18): centralidade, gargalos, cadeias */}
+      {a.graph.chains.length + a.graph.mostConnected.length + a.graph.bottlenecks.length > 0 ? (
+        <Card className="p-5">
+          <CardHeader
+            title="Grafo de aprendizagem"
+            subtitle="Tópicos centrais, gargalos e cadeias — derivados das conexões do edital"
+            icon={<Brain size={16} />}
+          />
+          <div className="mt-4 grid gap-4 lg:grid-cols-3">
+            <div>
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Mais conectados
+              </p>
+              {a.graph.mostConnected.length === 0 ? (
+                <p className="text-xs text-muted-foreground">sem conexões mapeadas</p>
+              ) : (
+                a.graph.mostConnected.map((t) => (
+                  <p key={t.topicId} className="truncate text-xs text-muted-foreground">
+                    • {t.name} <span className="opacity-70">({t.connections})</span>
+                  </p>
+                ))
+              )}
+            </div>
+            <div>
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-warning">
+                Gargalos (bloqueiam outros)
+              </p>
+              {a.graph.bottlenecks.length === 0 ? (
+                <p className="text-xs text-muted-foreground">nenhum gargalo ativo 🎉</p>
+              ) : (
+                a.graph.bottlenecks.map((t) => (
+                  <p key={t.topicId} className="truncate text-xs text-muted-foreground">
+                    • {t.name} <span className="opacity-70">bloqueia {t.blocks} tópico(s)</span>
+                  </p>
+                ))
+              )}
+            </div>
+            <div>
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Cadeias de aprendizado
+              </p>
+              {a.graph.chains.length === 0 ? (
+                <p className="text-xs text-muted-foreground">sem cadeias mapeadas</p>
+              ) : (
+                a.graph.chains.slice(0, 4).map((c) => (
+                  <div key={c.key} className="mb-1.5">
+                    <p className="truncate text-xs text-muted-foreground">
+                      {c.title} <span className="opacity-70">({c.topics.length} tópicos)</span>
+                    </p>
+                    <div className="mt-0.5 flex items-center gap-2">
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-primary"
+                          style={{ width: `${c.coveragePct}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] tabular-nums text-muted-foreground">
+                        {c.coveragePct}%
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </Card>
+      ) : null}
+
       {/* Perfil + confiança */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-5">

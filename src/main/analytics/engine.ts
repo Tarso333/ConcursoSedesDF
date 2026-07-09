@@ -16,6 +16,7 @@
 import type {
   CurvePoint,
   DisciplineHeatmapRow,
+  GraphAnalytics,
   LearningAnalytics,
   LearningProfileTrait,
   LearningTrend,
@@ -24,6 +25,13 @@ import type {
   TopicMasteryCell,
   TopicStatus
 } from '@shared/domain'
+import {
+  bottlenecks,
+  chainCoverage,
+  degreeCentrality,
+  type GraphEdge,
+  learningChains
+} from '../graph/engine'
 import { ANALYTICS_CONFIG, type AnalyticsConfig } from './config'
 
 // ───────────────────────── Entrada (event log) ─────────────────────────
@@ -48,6 +56,7 @@ export interface AnalyticsInput {
   answers: AnalyticsAnswerEvent[]
   reviews: AnalyticsReviewEvent[]
   activityDays: string[] // dias distintos com qualquer atividade
+  relations: GraphEdge[] // grafo de aprendizagem (M18) — apenas consumido
 }
 
 // ───────────────────────── Utilitários puros ─────────────────────────
@@ -547,6 +556,7 @@ export function computeLearningAnalytics(
 
   return {
     generatedAt: `${input.todayIso}T00:00:00`,
+    graph: computeGraphAnalytics({ ...input, answers }, cfg),
     indicators: INDICATORS.map((def) => {
       const { value, detail } = def.compute(ctx)
       return { key: def.key, label: def.label, value, unit: def.unit, detail }
@@ -566,6 +576,73 @@ export function computeLearningAnalytics(
     methodStats,
     globalTrend: trendOf(answers, input.todayIso, cfg)
   }
+}
+
+/** Tópicos dominados: declarados DOMINADO ∪ domínio derivado ≥ limiar. */
+export function masteredTopicSet(
+  input: AnalyticsInput,
+  cfg: AnalyticsConfig = ANALYTICS_CONFIG
+): Set<number> {
+  const mastered = new Set<number>()
+  for (const t of input.topics) {
+    if (t.status === 'DOMINADO') {
+      mastered.add(t.id)
+      continue
+    }
+    const events = input.answers.filter((a) => a.topicId === t.id)
+    const m = masteryAt(events, input.todayIso, cfg)
+    if (m != null && m >= cfg.masteredThreshold) mastered.add(t.id)
+  }
+  return mastered
+}
+
+/** Métricas de grafo (consome M18: conectividade, gargalos, cadeias). */
+export function computeGraphAnalytics(
+  input: AnalyticsInput,
+  cfg: AnalyticsConfig = ANALYTICS_CONFIG
+): GraphAnalytics {
+  const topicById = new Map(input.topics.map((t) => [t.id, t]))
+  const discById = new Map(input.disciplines.map((d) => [d.id, d]))
+  const nameOf = (id: number): { name: string; disciplineName: string } => {
+    const t = topicById.get(id)
+    return {
+      name: t?.name ?? `#${id}`,
+      disciplineName: t ? (discById.get(t.disciplineId)?.name ?? '') : ''
+    }
+  }
+
+  const mastered = masteredTopicSet(input, cfg)
+  const centrality = degreeCentrality(input.relations)
+  const mostConnected = [...centrality.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+    .slice(0, 5)
+    .map(([topicId, degree]) => ({
+      topicId,
+      ...nameOf(topicId),
+      connections: Math.round(degree * 10) / 10
+    }))
+
+  const gargalos = bottlenecks(mastered, input.relations)
+    .slice(0, 5)
+    .map((b) => ({ topicId: b.topicId, ...nameOf(b.topicId), blocks: b.blocks }))
+
+  const chains = learningChains(input.relations)
+    .slice(0, 6)
+    .map((chain, i) => {
+      const first = nameOf(chain[0])
+      return {
+        key: `chain-${i}`,
+        title: `${first.disciplineName}: ${first.name}`,
+        coveragePct: chainCoverage(chain, mastered),
+        topics: chain.map((id) => ({
+          topicId: id,
+          name: nameOf(id).name,
+          mastered: mastered.has(id)
+        }))
+      }
+    })
+
+  return { mostConnected, bottlenecks: gargalos, chains }
 }
 
 // Exposto para integração com o Strategy Engine (M16): domínio por disciplina

@@ -39,11 +39,11 @@ adicionar uma entrada no array e um peso no config** — nada mais muda
 
 | Fator | Peso | Intensidade (0..1) | Justificativa típica |
 |---|---:|---|---|
-| `peso` | 14 | peso por questão ÷ maior peso do concurso | "peso 2× por questão" |
-| `incidencia` | 12 | questões estimadas ÷ maior incidência | "~6 questões na prova" |
-| `urgencia` | 12 | `1 − dias_até_prova/120` (null → 0.3) | "faltam 45 dias para a prova" |
-| `desempenho` | 16 | `1 − acerto` (≥5 respostas); 0.6 se pouca prática | "desempenho baixo (42% de acerto)" |
-| `cobertura` | 8 | `1 − respondidas/max(10, banco)` | "apenas 3 de 12 questões praticadas" |
+| `peso` | 13 | peso por questão ÷ maior peso do concurso | "peso 2× por questão" |
+| `incidencia` | 11 | questões estimadas ÷ maior incidência | "~6 questões na prova" |
+| `urgencia` | 11 | `1 − dias_até_prova/120` (null → 0.3) | "faltam 45 dias para a prova" |
+| `desempenho` | 14 | `1 − acerto` (≥5 respostas); 0.6 se pouca prática | "desempenho baixo (42% de acerto)" |
+| `cobertura` | 7 | `1 − respondidas/max(10, banco)` | "apenas 3 de 12 questões praticadas" |
 | `esquecimento` | 10 | `dias_sem_estudar/14` (nunca → 0.7) | "última atividade há 12 dias" |
 | `dominio` | 6 | `1 − tópicos_dominados/tópicos` (+0.5×revisar) | "2 tópicos marcados para revisar" |
 | `multiConcurso` | 6 | `(ocorrências−1)/(concursos−1)` | "cai em 2 concursos ativos" |
@@ -51,6 +51,7 @@ adicionar uma entrada no array e um peso no config** — nada mais muda
 | `dificuldade` | 3 | mix de dificuldade do banco (F=0.2 M=0.5 D=1.0) | "questões majoritariamente difíceis" |
 | `simulado` | 3 | `1 − acerto_em_simulados` (≥5 respostas) | "50% de acerto em simulados" |
 | `metaBloco` | 6 | `gap_do_corte × 2` do bloco da disciplina | "bloco abaixo do corte de eliminação" |
+| `grafo` | 6 | alavancagem no grafo (M18): prontos + destravamentos ÷ máximo | "concluir aqui destrava 3 tópico(s) no grafo" |
 
 **Prioridade**: score ≥70 → Muito Alta · ≥50 → Alta · ≥32 → Média · senão Baixa (limiar no config).
 

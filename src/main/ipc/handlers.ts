@@ -42,6 +42,7 @@ import {
 } from '../repositories/errorRepository'
 import {
   getContentTree,
+  getDisciplineGraph,
   getTopicKnowledge,
   setTopicStatus
 } from '../repositories/knowledgeRepository'
@@ -101,6 +102,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.contentSetTopicStatus, (_e, topicId: number, status: TopicStatus) =>
     setTopicStatus(topicId, status)
   )
+  ipcMain.handle(IPC.contentGraph, (_e, disciplineId: number) => getDisciplineGraph(disciplineId))
 
   ipcMain.handle(IPC.dashboardOverview, () => getDashboardOverview(getActiveContest()))
 

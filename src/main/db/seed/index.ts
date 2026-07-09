@@ -8,6 +8,7 @@ import {
   questionOptions,
   questions,
   settings,
+  topicRelations,
   topics
 } from '../schema'
 import { type ContestSeed, SEED_CONTESTS } from './contests'
@@ -96,6 +97,54 @@ function seedContest(db: DB, seed: ContestSeed): void {
       seedQuestion(db, contestId, seed.slug, q)
     } catch (e) {
       console.error('[seed] questão ignorada:', q.statement.slice(0, 60), e)
+    }
+  }
+
+  // Grafo de aprendizagem — idempotente por (origem, destino, tipo).
+  const topicIdOf = (disciplineSlug: string, topicName: string): number | null => {
+    const disc = db
+      .select({ id: disciplines.id })
+      .from(disciplines)
+      .where(and(eq(disciplines.contestId, contestId), eq(disciplines.slug, disciplineSlug)))
+      .get()
+    if (!disc) return null
+    const topic = db
+      .select({ id: topics.id })
+      .from(topics)
+      .where(and(eq(topics.disciplineId, disc.id), eq(topics.name, topicName)))
+      .get()
+    return topic?.id ?? null
+  }
+  const BIDI = ['COMPLEMENTA', 'ESTUDADO_JUNTO', 'SEMELHANTE', 'RELACIONADO']
+  for (const rel of seed.relations ?? []) {
+    try {
+      const sourceId = topicIdOf(rel.from.disciplineSlug, rel.from.topic)
+      const targetId = topicIdOf(rel.to.disciplineSlug, rel.to.topic)
+      if (!sourceId || !targetId || sourceId === targetId) continue
+      const exists = db
+        .select({ id: topicRelations.id })
+        .from(topicRelations)
+        .where(
+          and(
+            eq(topicRelations.sourceTopicId, sourceId),
+            eq(topicRelations.targetTopicId, targetId),
+            eq(topicRelations.kind, rel.kind)
+          )
+        )
+        .get()
+      if (exists) continue
+      db.insert(topicRelations)
+        .values({
+          sourceTopicId: sourceId,
+          targetTopicId: targetId,
+          kind: rel.kind,
+          strength: rel.strength ?? 0.5,
+          bidirectional: BIDI.includes(rel.kind),
+          note: rel.note ?? null
+        })
+        .run()
+    } catch (e) {
+      console.error('[seed] relação ignorada:', rel.from.topic, '→', rel.to.topic, e)
     }
   }
 
