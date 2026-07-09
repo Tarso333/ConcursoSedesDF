@@ -2,6 +2,9 @@
 // Derivado de PESQUISA.md. Estimativas de questões somam 20 (gerais) + 40 (específicos).
 // As contagens são estimativas de peso para o planejador; refinar contra o PDF oficial.
 
+/** Tópico do seed: string simples ou tópico com subtópicos (topics.parent_id). */
+export type SeedTopic = string | { name: string; children: string[] }
+
 export interface SeedDiscipline {
   slug: string
   name: string
@@ -9,7 +12,7 @@ export interface SeedDiscipline {
   weight: number
   examQuestionEstimate: number
   color: string
-  topics: string[]
+  topics: SeedTopic[]
 }
 
 export const CURRICULUM: SeedDiscipline[] = [

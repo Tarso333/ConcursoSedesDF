@@ -33,6 +33,14 @@ export interface SeedTopicKnowledge {
   entries: SeedKnowledgeEntry[]
 }
 
+/** Deck inicial de flashcards do concurso (dados; idempotente por nome). */
+export interface SeedStarterDeck {
+  name: string
+  disciplineSlug?: string
+  description?: string
+  cards: { front: string; back: string; topic?: SeedTopicRef }[]
+}
+
 /** Formato de cadastro de um concurso via seed — apenas dados. */
 export interface ContestSeed {
   slug: string
@@ -48,4 +56,5 @@ export interface ContestSeed {
   questions: SeedQuestion[]
   knowledge?: SeedTopicKnowledge[]
   relations?: SeedRelation[]
+  starterDecks?: SeedStarterDeck[]
 }

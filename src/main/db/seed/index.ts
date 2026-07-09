@@ -1,13 +1,17 @@
 import { and, count, eq, isNull } from 'drizzle-orm'
 import type { DB } from '../connection'
+import { nowSql } from '../../lib/sqlDate'
 import {
   contests,
+  decks,
   disciplines,
+  flashcards,
   gamification,
   knowledgeEntries,
   questionOptions,
   questions,
   settings,
+  srsCards,
   topicRelations,
   topics
 } from '../schema'
@@ -85,7 +89,21 @@ function seedContest(db: DB, seed: ContestSeed): void {
         .run()
       const disciplineId = Number(res.lastInsertRowid)
       d.topics.forEach((t, ti) => {
-        db.insert(topics).values({ disciplineId, name: t, slug: slugify(t), orderIndex: ti }).run()
+        if (typeof t === 'string') {
+          db.insert(topics).values({ disciplineId, name: t, slug: slugify(t), orderIndex: ti }).run()
+          return
+        }
+        // Tópico com subtópicos (usa topics.parent_id, existente desde a v1).
+        const parentRes = db
+          .insert(topics)
+          .values({ disciplineId, name: t.name, slug: slugify(t.name), orderIndex: ti })
+          .run()
+        const parentId = Number(parentRes.lastInsertRowid)
+        t.children.forEach((child, ci) => {
+          db.insert(topics)
+            .values({ disciplineId, parentId, name: child, slug: slugify(child), orderIndex: ci })
+            .run()
+        })
       })
     })
   }
@@ -188,6 +206,46 @@ function seedContest(db: DB, seed: ContestSeed): void {
       })
     } catch (e) {
       console.error('[seed] conhecimento ignorado:', block.disciplineSlug, block.topic, e)
+    }
+  }
+
+  // Decks iniciais de flashcards — idempotente por nome do deck no concurso;
+  // decks são do usuário, então nunca recriamos um deck existente.
+  for (const deckSeed of seed.starterDecks ?? []) {
+    try {
+      const exists = db
+        .select({ id: decks.id })
+        .from(decks)
+        .where(and(eq(decks.contestId, contestId), eq(decks.name, deckSeed.name)))
+        .get()
+      if (exists) continue
+
+      let disciplineId: number | null = null
+      if (deckSeed.disciplineSlug) {
+        const disc = db
+          .select({ id: disciplines.id })
+          .from(disciplines)
+          .where(and(eq(disciplines.contestId, contestId), eq(disciplines.slug, deckSeed.disciplineSlug)))
+          .get()
+        disciplineId = disc?.id ?? null
+      }
+
+      const deckRes = db
+        .insert(decks)
+        .values({ contestId, name: deckSeed.name, disciplineId, description: deckSeed.description ?? null })
+        .run()
+      const deckId = Number(deckRes.lastInsertRowid)
+
+      for (const card of deckSeed.cards) {
+        const topicId = card.topic ? topicIdOf(card.topic.disciplineSlug, card.topic.topic) : null
+        const fcRes = db
+          .insert(flashcards)
+          .values({ deckId, topicId, front: card.front, back: card.back })
+          .run()
+        db.insert(srsCards).values({ flashcardId: Number(fcRes.lastInsertRowid), due: nowSql() }).run()
+      }
+    } catch (e) {
+      console.error('[seed] deck inicial ignorado:', deckSeed.name, e)
     }
   }
 }
