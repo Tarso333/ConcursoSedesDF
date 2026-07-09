@@ -106,6 +106,7 @@ export function Dashboard(): JSX.Element {
   const overview = useAsync(() => api.getDashboardOverview(), [])
   const disciplines = useAsync(() => api.getDisciplinesWithStats(), [])
   const plan = useAsync(() => api.getDailyPlan(), [])
+  const analytics = useAsync(() => api.getLearningAnalytics(), [])
 
   if (overview.loading || disciplines.loading) return <Loading label="Montando seu painel…" />
   if (overview.error) return <ErrorState message={overview.error} />
@@ -231,6 +232,53 @@ export function Dashboard(): JSX.Element {
           accent="hsl(var(--accent))"
         />
       </div>
+
+      {/* Learning Analytics (M17): como você está aprendendo */}
+      {analytics.data ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Maior evolução (7d)"
+            value={
+              analytics.data.biggestImprovement
+                ? `+${Math.round(analytics.data.biggestImprovement.deltaPp)}pp`
+                : '—'
+            }
+            sub={analytics.data.biggestImprovement?.name ?? 'pratique para medir'}
+            icon={<TrendingUp size={16} />}
+            accent="hsl(var(--success))"
+          />
+          <StatCard
+            label="Maior regressão (7d)"
+            value={
+              analytics.data.biggestRegression
+                ? `${Math.round(analytics.data.biggestRegression.deltaPp)}pp`
+                : '—'
+            }
+            sub={analytics.data.biggestRegression?.name ?? 'nenhuma regressão 🎉'}
+            icon={<Activity size={16} />}
+            accent="hsl(var(--danger))"
+          />
+          <StatCard
+            label="Retenção geral"
+            value={(() => {
+              const r = analytics.data.indicators.find((i) => i.key === 'retencao')
+              return r?.value != null ? `${r.value}%` : '—'
+            })()}
+            sub="quanto do aprendido permanece"
+            icon={<CheckCircle2 size={16} />}
+          />
+          <StatCard
+            label="Tempo médio/questão"
+            value={(() => {
+              const t = analytics.data.indicators.find((i) => i.key === 'tempoQuestao')
+              return t?.value != null ? `${Math.round(t.value)}s` : '—'
+            })()}
+            sub="últimos 30 dias"
+            icon={<CalendarClock size={16} />}
+            accent="hsl(var(--warning))"
+          />
+        </div>
+      ) : null}
 
       {/* Plano do dia (Motor de Estratégia) */}
       {plan.data && plan.data.items.length > 0 ? (

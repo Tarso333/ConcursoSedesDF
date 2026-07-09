@@ -431,6 +431,82 @@ export interface DailyPlan {
   generatedAt: string
 }
 
+// ───────── Learning Analytics Engine (M17) ─────────
+// Projeções DERIVADAS do event log (answers/srs_reviews/sessões/status).
+// Nada é cadastrado manualmente; tudo é recomputável por replay.
+export type LearningTrend = 'MELHORANDO' | 'ESTAVEL' | 'PIORANDO'
+
+export interface AnalyticsIndicator {
+  key: string
+  label: string
+  value: number | null // null = dados insuficientes
+  unit: string // '%', 's', 'dias', 'min'…
+  detail: string // explicação legível do número
+}
+
+export interface CurvePoint {
+  date: string // yyyy-mm-dd
+  masteryPct: number // 0..100
+}
+
+export interface TopicMasteryCell {
+  topicId: number
+  name: string
+  masteryPct: number
+  answeredCount: number
+  trend: LearningTrend
+}
+
+export interface DisciplineHeatmapRow {
+  disciplineId: number
+  name: string
+  color: string
+  coveragePct: number // tópicos efetivamente praticados
+  masteryPct: number // domínio médio derivado
+  topics: TopicMasteryCell[]
+}
+
+export interface TopicDelta {
+  topicId: number
+  name: string
+  disciplineName: string
+  color: string
+  deltaPp: number // variação de domínio em pontos percentuais
+  curve: CurvePoint[]
+}
+
+export interface LearningProfileTrait {
+  key: string
+  label: string // dimensão (ex.: "Velocidade de aprendizagem")
+  classification: string // ex.: "Aprende rápido"
+  description: string // como foi calculado
+  favorable: boolean | null // null = neutro/dados insuficientes
+}
+
+export interface TopicConfidenceRef {
+  topicId: number
+  name: string
+  disciplineName: string
+  declared: TopicStatus
+  masteryPct: number
+}
+
+export interface LearningAnalytics {
+  generatedAt: string
+  indicators: AnalyticsIndicator[] // registro extensível (Open/Closed)
+  rollingAccuracy: { windowDays: number; accuracy: number | null; answered: number }[]
+  learningCurve: CurvePoint[] // domínio global por semana (replay)
+  forgettingCurve: CurvePoint[] // projeção determinística sem prática
+  heatmap: DisciplineHeatmapRow[]
+  biggestImprovement: TopicDelta | null // da semana
+  biggestRegression: TopicDelta | null
+  profile: LearningProfileTrait[]
+  overconfident: TopicConfidenceRef[] // declarado dominado, domínio baixo
+  underconfident: TopicConfidenceRef[] // domínio alto, não declarado
+  methodStats: { source: string; label: string; answered: number; accuracy: number }[]
+  globalTrend: LearningTrend
+}
+
 // ───────── Tutor IA (M12) ─────────
 export interface AiMessageDTO {
   id: number

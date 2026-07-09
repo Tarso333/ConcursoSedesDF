@@ -7,6 +7,7 @@ import type { Contest, DisciplineBlock } from '@shared/domain'
 import { getDb } from '../db/connection'
 import { answers, contests, disciplines, questions, topicProgress, topics } from '../db/schema'
 import { getDisciplinesWithStats } from '../repositories/catalogRepository'
+import { getDisciplineMastery } from '../services/analyticsService'
 import { getReviewStats } from '../services/reviewService'
 import type { StrategyDisciplineInput, StrategyInput } from './engine'
 
@@ -43,6 +44,9 @@ function accuracyByDiscipline(contestId: number, whereExtra: ReturnType<typeof s
 export function buildStrategyInput(contest: Contest, availableMinutes: number): StrategyInput {
   const db = getDb()
   const stats = getDisciplinesWithStats(contest.id)
+  // Integração M17: o domínio usado na previsão vem do Learning Analytics
+  // (modelo com recência + esquecimento), não da acurácia bruta.
+  const analyticsMastery = getDisciplineMastery(contest)
 
   // Desempenho recente (7d) × anterior (8–30d) — tendência de evolução.
   const recent = accuracyByDiscipline(contest.id, sql`date(${answers.createdAt}) >= date('now', '-7 day')`)
@@ -173,7 +177,7 @@ export function buildStrategyInput(contest: Contest, availableMinutes: number): 
       questionCount: d.questionsCount,
       answeredCount: d.answeredCount,
       correctCount: d.correctCount,
-      masteryPct: d.masteryPct,
+      masteryPct: analyticsMastery.get(d.id) ?? d.masteryPct,
       recentAccuracy: rec && rec.answered >= 3 ? rec.correct / rec.answered : null,
       previousAccuracy: prev && prev.answered >= 3 ? prev.correct / prev.answered : null,
       simAccuracy: sim && sim.answered > 0 ? sim.correct / sim.answered : null,

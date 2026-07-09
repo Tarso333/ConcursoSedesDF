@@ -64,6 +64,7 @@ const api: AppApi = {
   toggleStudyTask: (id: number) => ipcRenderer.invoke(IPC.planToggleTask, id),
   getApprovalPlan: () => ipcRenderer.invoke(IPC.approvalPlan),
   getDailyPlan: (minutes?: number) => ipcRenderer.invoke(IPC.strategyDailyPlan, minutes),
+  getLearningAnalytics: () => ipcRenderer.invoke(IPC.analyticsOverview),
   getAiStatus: () => ipcRenderer.invoke(IPC.aiStatus),
   getAiHistory: () => ipcRenderer.invoke(IPC.aiHistory),
   sendAiMessage: (content: string) => ipcRenderer.invoke(IPC.aiSend, content),

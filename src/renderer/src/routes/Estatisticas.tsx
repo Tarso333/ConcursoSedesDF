@@ -1,5 +1,6 @@
 import { BarChart3, CheckCircle2, Compass, Target, TrendingDown, TrendingUp } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { LearningAnalyticsSection } from '../components/analytics/LearningAnalyticsSection'
 import {
   Area,
   AreaChart,
@@ -209,6 +210,9 @@ export function Estatisticas(): JSX.Element {
           </div>
         </Card>
       ) : null}
+
+      {/* Learning Analytics (M17) — visualização; cálculos no motor puro */}
+      <LearningAnalyticsSection />
     </div>
   )
 }

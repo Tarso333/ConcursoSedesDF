@@ -22,6 +22,7 @@ import type {
   Flashcard,
   FlashcardInput,
   GamificationProgress,
+  LearningAnalytics,
   MockAnswerInput,
   MockExamConfig,
   MockExamResult,
@@ -90,6 +91,7 @@ export const IPC = {
   planToggleTask: 'plan:toggleTask',
   approvalPlan: 'approval:plan',
   strategyDailyPlan: 'strategy:dailyPlan',
+  analyticsOverview: 'analytics:overview',
   aiStatus: 'ai:status',
   aiHistory: 'ai:history',
   aiSend: 'ai:send',
@@ -166,6 +168,8 @@ export interface AppApi {
   getApprovalPlan(): Promise<ApprovalPlan>
   // Motor de Estratégia (M16) — minutes omitido usa a meta diária do usuário
   getDailyPlan(minutes?: number): Promise<DailyPlan>
+  // Learning Analytics (M17)
+  getLearningAnalytics(): Promise<LearningAnalytics>
   // Tutor IA (M12)
   getAiStatus(): Promise<AiStatus>
   getAiHistory(): Promise<AiMessageDTO[]>

@@ -65,6 +65,7 @@ import {
   getMockHistory,
   getMockResult
 } from '../services/simuladoService'
+import { getLearningAnalytics } from '../services/analyticsService'
 import { getStatsOverview } from '../services/statsService'
 import { getDailyPlan } from '../services/strategyService'
 
@@ -167,6 +168,9 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.strategyDailyPlan, (_e, minutes?: number) =>
     getDailyPlan(getActiveContest(), minutes)
   )
+
+  // Learning Analytics (M17)
+  ipcMain.handle(IPC.analyticsOverview, () => getLearningAnalytics(getActiveContest()))
 
   // Tutor IA (M12)
   ipcMain.handle(IPC.aiStatus, () => getAiStatus())
