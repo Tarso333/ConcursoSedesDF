@@ -1,7 +1,7 @@
 # DECISIONS — ADRs · APROVA SEDES DF
 
 > Registro de decisões arquiteturais. Formato curto: Contexto · Decisão · Consequências.
-> **Última atualização:** 2026-06-23.
+> **Última atualização:** 2026-07-15.
 
 ---
 
@@ -38,6 +38,11 @@
 ## ADR-007 — App de página única no renderer (React Router)
 **Decisão:** Renderer é uma SPA com React Router; navegação por sidebar. Estado de UI no Zustand; dados sempre buscados do main via `window.api`.
 **Consequências:** Telas desacopladas do acesso a dados; fácil adicionar features como rotas.
+
+## ADR-015 — Universal Contest Import Engine: módulo isolado, determinístico, produtor de ContestSeed
+**Contexto:** Cadastrar um concurso hoje é escrever um `ContestSeed` à mão (SEDES, ABGF, DATAPREV). Para escalar, é preciso transformar um **edital em PDF** em `ContestSeed` automaticamente — **sem IA** (parsing determinístico), **sem tocar em nenhuma engine/domínio/migration**, e produzindo **exatamente o formato de dados** que M14–M18 já consomem.
+**Decisão:** **Módulo independente `src/importer/`** — o domínio NÃO o importa (nada em `src/main` depende dele); ele importa apenas TIPOS do domínio (`ContestSeed`, `SeedDiscipline`), dependência unidirecional correta. Pipeline determinístico em etapas puras: (1) **extração de PDF** por Node+zlib (streams FlateDecode; mesma técnica das cargas ABGF/DATAPREV, zero dependência externa); (2) **metadados** por regex/heurística (banca, cargo, cidade, data — preferindo anos recentes —, salário — maior "R$" perto de "remuneração" —, jornada); (3) **currículo** por gramática de numeração: disciplina = linha em caixa alta sem stopword; tópicos = sequência "1 … 2 … N" (seguindo o próximo inteiro esperado, com marcador nunca precedido por letra/dígito/ponto — assim "IPv6 e", "802.11", "19C" não viram falsos tópicos); subtópicos = decimais "N.M"; fallback por delimitadores (";" depois ",") quando não há numeração; enumerações entre parênteses viram filhos; recorte de seção por âncoras início/fim (importar um perfil específico); (4) **placeholders** compatíveis: um RESUMO-stub por tópico (Knowledge/M15) e cadeia de CONTINUIDADE seguindo a numeração do edital (Relationship/M18 — ordenação do próprio edital, não semântica inventada); (5) **ExamConfig** derivado (blocos das disciplinas achadas + duração/peso lidos do texto, com fallback documentado); (6) **relatórios de cobertura e inconsistências**. **Extensibilidade por banca (Open/Closed):** interface `BankAdapter` (assinatura de detecção + padrões regex + hooks opcionais de refino) num **registro**; FGV, FCC, Quadrix, Cebraspe/CESPE e AOCP registrados; adicionar banca = novo arquivo + `registerAdapter`, sem tocar no pipeline. Documentação em `IMPORTER.md`.
+**Consequências:** (+) importar concurso novo deixa de ser trabalho de código e vira revisão de dados; validado ponta a ponta no **PDF oficial da DATAPREV** (5 disciplinas, tópicos `[5,10,24,9,5]` — idêntico à curadoria manual) e por **round-trip** dos três seeds (SEDES/ABGF/DATAPREV → texto de edital → parser recupera a mesma estrutura); 17 testes; o importador não entra no bundle (nada o importa em runtime). (−) parsing determinístico degrada em PDFs muito ruidosos (multicoluna, quebras no meio da palavra) — por isso a saída é **um rascunho com placeholders + relatório de inconsistências para curadoria humana**, nunca cadastro cego; conhecimento/relações ricos e questões continuam curadoria manual (o importador só cria a estrutura e os stubs).
 
 ## ADR-014 — Relationship Engine: grafo de aprendizagem neutro e consumível
 **Contexto:** O edital era uma lista; tópicos precisavam de relacionamentos explícitos (pré-requisito, dependência, continuidade, semelhança…) consumíveis por Conhecimento, Estratégia e Analytics — sem que nenhuma engine fosse dona do grafo, sem campos genéricos, e pronto para importação automática futura.

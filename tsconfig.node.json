@@ -22,6 +22,7 @@
   "include": [
     "src/main/**/*",
     "src/preload/**/*",
+    "src/importer/**/*",
     "shared/**/*",
     "electron.vite.config.ts",
     "drizzle.config.ts"

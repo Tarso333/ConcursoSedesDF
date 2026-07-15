@@ -64,6 +64,9 @@ ConcursoSedesDF/
 │  │  ├─ repositories/            # acesso a dados por entidade
 │  │  ├─ services/                # FSRS, planner, estatísticas, IA
 │  │  └─ ipc/                     # handlers + contrato de canais
+│  ├─ importer/                   # Universal Contest Import Engine (ISOLADO):
+│  │                              # edital PDF → ContestSeed determinístico
+│  │                              # (sem IA); domínio NÃO depende dele (ADR-015)
 │  ├─ preload/
 │  │  └─ index.ts                 # contextBridge → window.api tipado
 │  └─ renderer/
