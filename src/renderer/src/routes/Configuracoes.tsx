@@ -1,5 +1,6 @@
-import { Check, Database, Download, Save, Settings as SettingsIcon, Upload } from 'lucide-react'
+import { Check, Database, Download, RefreshCw, Save, Settings as SettingsIcon, Upload, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import type { AIHealth } from '@shared/domain'
 import type { SettingsUpdateInput } from '@shared/ipc'
 import { PageHeader } from '../components/common/PageHeader'
 import { Card, CardHeader } from '../components/ui/Card'
@@ -40,6 +41,24 @@ export function Configuracoes(): JSX.Element {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [backupMsg, setBackupMsg] = useState('')
+
+  // AI Platform (M22)
+  const providers = useAsync(() => api.getAiProviders(), [])
+  const models = useAsync(() => api.getAiModels(), [])
+  const [health, setHealth] = useState<AIHealth | null>(null)
+  const [testing, setTesting] = useState(false)
+  const selectedProvider = (providers.data ?? []).find(
+    (p) => p.id === (form.aiProvider ?? 'ollama')
+  )
+  const testHealth = async (): Promise<void> => {
+    setTesting(true)
+    setHealth(null)
+    try {
+      setHealth(await api.checkAiHealth())
+    } finally {
+      setTesting(false)
+    }
+  }
 
   const doExport = async (): Promise<void> => {
     const r = await api.exportBackup()
@@ -161,34 +180,102 @@ export function Configuracoes(): JSX.Element {
         <div className="space-y-4">
           <Card className="space-y-4 p-5">
             <CardHeader
-              title="Tutor IA (opcional)"
-              subtitle="O app funciona 100% offline; a IA é um extra"
+              title="Inteligência Artificial"
+              subtitle="Padrão: Ollama local (grátis, offline). O app inteiro funciona sem IA."
             />
-            <Field label="Provedor" hint="anthropic (Claude/Opus), openai ou openrouter">
-              <input
+            <Field label="Provedor">
+              <select
                 className={inputCls}
-                value={form.aiProvider ?? ''}
+                value={form.aiProvider ?? 'ollama'}
                 onChange={(e) => set('aiProvider', e.target.value)}
-                placeholder="anthropic"
-              />
+              >
+                {(providers.data ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                    {p.capabilities.local ? ' · local' : ''}
+                    {p.capabilities.needsApiKey ? ' · exige chave' : ''}
+                  </option>
+                ))}
+              </select>
             </Field>
-            <Field label="Modelo" hint="Padrão do Opus 4.8 se deixar vazio com provedor anthropic">
-              <input
-                className={inputCls}
-                value={form.aiModel ?? ''}
-                onChange={(e) => set('aiModel', e.target.value)}
-                placeholder="claude-opus-4-8"
-              />
+            <Field
+              label="Modelo"
+              hint={
+                selectedProvider?.capabilities.listModels
+                  ? models.data?.length
+                    ? `${models.data.length} modelo(s) instalados detectados.`
+                    : 'Nenhum modelo detectado — instale um com: ollama pull llama3.2:3b'
+                  : 'Deixe vazio para usar o modelo padrão do provedor.'
+              }
+            >
+              <div className="flex gap-2">
+                <input
+                  className={inputCls}
+                  list="ai-models"
+                  value={form.aiModel ?? ''}
+                  onChange={(e) => set('aiModel', e.target.value)}
+                  placeholder={selectedProvider?.id === 'ollama' ? 'llama3.2' : 'modelo padrão'}
+                />
+                {selectedProvider?.capabilities.listModels ? (
+                  <button
+                    type="button"
+                    onClick={() => void models.reload()}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition hover:bg-muted"
+                    title="Detectar modelos instalados"
+                  >
+                    <RefreshCw size={14} /> Detectar
+                  </button>
+                ) : null}
+                <datalist id="ai-models">
+                  {(models.data ?? []).map((m) => (
+                    <option key={m.name} value={m.name} />
+                  ))}
+                </datalist>
+              </div>
             </Field>
-            <Field label="Chave de API" hint={settings?.hasAiKey ? 'Uma chave já está salva.' : 'Nenhuma chave salva.'}>
-              <input
-                type="password"
-                className={inputCls}
-                value={form.aiApiKey ?? ''}
-                onChange={(e) => set('aiApiKey', e.target.value)}
-                placeholder={settings?.hasAiKey ? '•••••••• (preencha para substituir)' : 'cole sua chave aqui'}
-              />
-            </Field>
+            {selectedProvider?.capabilities.needsApiKey ? (
+              <Field
+                label="Chave de API"
+                hint={settings?.hasAiKey ? 'Uma chave já está salva.' : 'Nenhuma chave salva.'}
+              >
+                <input
+                  type="password"
+                  className={inputCls}
+                  value={form.aiApiKey ?? ''}
+                  onChange={(e) => set('aiApiKey', e.target.value)}
+                  placeholder={settings?.hasAiKey ? '•••••••• (preencha para substituir)' : 'cole sua chave aqui'}
+                />
+              </Field>
+            ) : null}
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => void testHealth()}
+                disabled={testing}
+                className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition hover:bg-muted disabled:opacity-60"
+              >
+                <Zap size={14} />
+                {testing ? 'Testando…' : 'Testar conexão'}
+              </button>
+              {health ? (
+                <div
+                  className={`rounded-lg border p-2.5 text-xs ${
+                    health.ok ? 'border-success/40 bg-success/10' : 'border-warning/40 bg-warning/10'
+                  }`}
+                >
+                  <p className="font-medium">
+                    {health.ok ? '✓ Conectado' : '✗ Indisponível'} · {health.provider}
+                    {health.model ? ` · ${health.model}` : ''}
+                    {health.latencyMs != null ? ` · ${health.latencyMs}ms` : ''}
+                    {health.tokensPerSecond != null ? ` · ${health.tokensPerSecond} tokens/s` : ''}
+                  </p>
+                  <p className="mt-1 text-muted-foreground">{health.detail}</p>
+                </div>
+              ) : null}
+              <p className="text-xs text-muted-foreground">
+                O teste usa as configurações <strong>salvas</strong> — salve antes de testar.
+              </p>
+            </div>
           </Card>
 
           <Card className="space-y-2 p-5">

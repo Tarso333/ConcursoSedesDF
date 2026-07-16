@@ -1,7 +1,7 @@
 {
   "name": "aprova-sedes-df",
-  "version": "0.1.0",
-  "description": "App desktop offline-first para aprovação no concurso SEDES DF 2026 (Quadrix)",
+  "version": "1.0.0-rc.1",
+  "description": "APROVA — plataforma desktop offline-first de preparação para concursos públicos",
   "author": "Tarso Hebert",
   "license": "UNLICENSED",
   "private": true,

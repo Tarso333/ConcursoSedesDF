@@ -161,7 +161,7 @@ export type KnowledgeKind =
   | 'LINK' // url + title
   | 'VIDEO' // url + title
   | 'PDF' // url/caminho + title
-  | 'MAPA_MENTAL' // reservado (futuro): body = estrutura do mapa
+  | 'MAPA_MENTAL' // body = estrutura hierárquica do mapa (markdown; M22)
 
 export interface KnowledgeEntry {
   id: number
@@ -574,18 +574,102 @@ export interface LearningAnalytics {
   globalTrend: LearningTrend
 }
 
-// ───────── Tutor IA (M12) ─────────
+// ───────── Tutor IA (M12) + AI Platform (M22) ─────────
 export interface AiMessageDTO {
   id: number
   role: 'user' | 'assistant'
   content: string
   createdAt: string
+  /** Fontes da plataforma usadas na resposta (M22; opcional = retrocompat). */
+  attribution?: TutorAttribution | null
 }
 
 export interface AiStatus {
   configured: boolean
   provider: string | null
   model: string | null
+}
+
+// A plataforma nunca fala com um provedor direto: AIProvider (main) atrás de
+// registry/factory. O renderer só vê estes DTOs.
+export type AIProviderId = 'ollama' | 'openai' | 'anthropic' | 'gemini-cli' | 'openrouter' | 'custom'
+
+export interface AICapabilities {
+  streaming: boolean // resposta em chunks
+  local: boolean // funciona sem internet
+  needsApiKey: boolean
+  listModels: boolean // sabe enumerar modelos disponíveis
+  jsonOutput: boolean // confiável para saída JSON estruturada
+}
+
+export interface AIProviderInfo {
+  id: AIProviderId
+  label: string
+  capabilities: AICapabilities
+  active: boolean // é o provedor selecionado nas configurações
+  configured: boolean // tem o que precisa para funcionar (chave/instalação)
+}
+
+export interface AIHealth {
+  ok: boolean
+  provider: AIProviderId
+  model: string | null
+  latencyMs: number | null
+  tokensPerSecond: number | null // medido (Ollama)
+  detail: string // diagnóstico legível (ex.: "instale um modelo: ollama pull …")
+}
+
+export interface AIModelInfo {
+  name: string
+  sizeBytes: number | null
+  family: string | null
+}
+
+/** Resumo do contexto do estudante (chips do painel do Tutor). */
+export interface AIContextSummary {
+  contestName: string
+  role: string | null
+  board: string | null
+  daysUntilExam: number | null
+  topPriority: string | null // disciplina nº 1 do Plano do Dia
+  dueReviews: number
+  openErrors: number
+  accuracy: number | null // 0..1 geral
+  provider: AIProviderId
+  providerReady: boolean
+  model: string | null
+}
+
+/** Atribuição DETERMINÍSTICA: derivada do contexto que a plataforma montou. */
+export interface TutorAttribution {
+  knowledgeUsed: { topicName: string; entryTitle: string; kind: KnowledgeKind }[]
+  topicsConsulted: { topicId: number; name: string; disciplineName: string }[]
+  errorsInfluencing: { questionId: number; statement: string; disciplineName: string }[]
+  reviewsRelated: { front: string; deckName: string }[]
+  dependentTopics: { name: string; disciplineName: string; kind: RelationKind }[]
+}
+
+export type GenerationKind = 'RESUMO' | 'FLASHCARDS' | 'MAPA_MENTAL' | 'QUESTOES' | 'EXPLICACAO' | 'EXEMPLOS'
+
+export interface GenerationRequest {
+  kind: GenerationKind
+  topicId: number
+  count?: number // p/ flashcards e questões
+}
+
+export interface GenerationResult {
+  kind: GenerationKind
+  topicId: number
+  topicName: string
+  saved: { knowledgeEntries: number; flashcards: number; questions: number; relations: number }
+  preview: string // descrição curta do que foi salvo
+}
+
+/** Sugestão dinâmica de pergunta (derivada de plano/erros/revisões). */
+export interface AISuggestion {
+  label: string
+  prompt: string
+  source: string // de onde veio (ex.: "Plano do Dia", "Caderno de Erros")
 }
 
 // ───────── Simulados (M7) ─────────

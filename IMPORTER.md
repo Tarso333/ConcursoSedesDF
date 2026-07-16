@@ -126,7 +126,14 @@ const { seed, report } = importContestFromPdf(pdfBuffer, {
 // report → cobertura + inconsistências para curadoria
 ```
 
-## 7. Limites conscientes
+## 7. Relação com a AI Platform (M22)
+
+Nenhuma: o importador permanece **100% determinístico** (sem IA), por decisão
+(ADR-015). A AI Platform pode, na curadoria, preencher os placeholders gerados
+aqui (ex.: "Gerar com IA" no painel do tópico) — mas são módulos independentes
+que não se importam mutuamente.
+
+## 8. Limites conscientes
 
 - Parsing determinístico **degrada em PDFs muito ruidosos** (multicoluna,
   quebras no meio de palavras). Por isso a saída é um **rascunho** com

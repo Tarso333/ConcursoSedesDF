@@ -15,12 +15,15 @@ import {
   type LucideIcon,
   Library,
   Scale,
+  Sparkles,
   StickyNote,
   Tags,
   Video
 } from 'lucide-react'
 import { useState } from 'react'
 import type {
+  GenerationKind,
+  GenerationResult,
   GraphTreeNode,
   KnowledgeEntry,
   KnowledgeKind,
@@ -240,6 +243,63 @@ function ConnectionGroup({
 }
 
 // ───────────────────────── Painel do tópico ─────────────────────────
+const GENERATION_ACTIONS: { kind: GenerationKind; label: string }[] = [
+  { kind: 'RESUMO', label: 'Resumo' },
+  { kind: 'MAPA_MENTAL', label: 'Mapa mental' },
+  { kind: 'FLASHCARDS', label: 'Flashcards' },
+  { kind: 'QUESTOES', label: 'Questões' },
+  { kind: 'EXPLICACAO', label: 'Explicação' },
+  { kind: 'EXEMPLOS', label: 'Exemplos' }
+]
+
+function GeneratePanel({ topicId, onDone }: { topicId: number; onDone: () => void }): JSX.Element {
+  const [busy, setBusy] = useState<GenerationKind | null>(null)
+  const [result, setResult] = useState<GenerationResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const run = async (kind: GenerationKind): Promise<void> => {
+    if (busy) return
+    setBusy(kind)
+    setResult(null)
+    setError(null)
+    try {
+      const r = await api.generateAiContent({ kind, topicId })
+      setResult(r)
+      onDone()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        <Sparkles size={15} className="text-primary" /> Gerar com IA
+        <span className="text-[11px] font-normal text-muted-foreground">
+          (opcional — salvo no conteúdo/flashcards/questões para você revisar)
+        </span>
+      </div>
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
+        {GENERATION_ACTIONS.map((a) => (
+          <button
+            key={a.kind}
+            type="button"
+            disabled={busy != null}
+            onClick={() => void run(a.kind)}
+            className="rounded-full border px-2.5 py-1 text-xs font-medium transition hover:bg-muted disabled:opacity-50"
+          >
+            {busy === a.kind ? 'Gerando…' : a.label}
+          </button>
+        ))}
+      </div>
+      {result ? <p className="mt-2 text-xs text-success">✓ {result.preview}</p> : null}
+      {error ? <p className="mt-2 text-xs text-warning">{error}</p> : null}
+    </Card>
+  )
+}
+
 function TopicPanel({
   topicId,
   onChanged,
@@ -349,6 +409,9 @@ function TopicPanel({
           <ConnectionGroup title="Dependem deste tópico" items={conn.dependents} onNavigate={onNavigate} />
         </Card>
       ) : null}
+
+      {/* Geração de conteúdo por IA (M22) — salva nas engines existentes */}
+      <GeneratePanel topicId={t.topicId} onDone={() => view.reload()} />
 
       {sections.length === 0 ? (
         <Card className="p-6">

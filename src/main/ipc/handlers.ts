@@ -5,6 +5,7 @@ import type {
   ErrorFilter,
   ErrorType,
   FlashcardInput,
+  GenerationRequest,
   MockAnswerInput,
   MockExamConfig,
   QuestionFilter,
@@ -53,6 +54,11 @@ import {
   toggleFavorite
 } from '../repositories/questionRepository'
 import { getSettings, updateSettings } from '../repositories/settingsRepository'
+import { detectProviders } from '../ai/capabilities'
+import { createActiveProvider } from '../ai/factory'
+import { generateContent } from '../ai/generation'
+import { checkAIHealth } from '../ai/health'
+import { buildContextSummary, buildSuggestions } from '../ai/summary'
 import { clearAiHistory, getAiHistory, getAiStatus, sendAiMessage } from '../services/aiService'
 import { getApprovalPlan } from '../services/approvalService'
 import { exportBackup, importBackup } from '../services/backupService'
@@ -174,11 +180,28 @@ export function registerIpcHandlers(): void {
   // Learning Analytics (M17)
   ipcMain.handle(IPC.analyticsOverview, () => getLearningAnalytics(getActiveContest()))
 
-  // Tutor IA (M12)
+  // Tutor IA (M12) — canais preservados; implementação delega à AI Platform.
   ipcMain.handle(IPC.aiStatus, () => getAiStatus())
   ipcMain.handle(IPC.aiHistory, () => getAiHistory(getActiveContestId()))
-  ipcMain.handle(IPC.aiSend, (_e, content: string) => sendAiMessage(getActiveContest(), content))
+  ipcMain.handle(IPC.aiSend, (e, content: string) =>
+    sendAiMessage(getActiveContest(), content, (text) => {
+      if (!e.sender.isDestroyed()) e.sender.send(IPC.aiStreamChunk, text)
+    })
+  )
   ipcMain.handle(IPC.aiClear, () => clearAiHistory(getActiveContestId()))
+
+  // AI Platform (M22) — provedores, saúde, contexto, sugestões e geração.
+  ipcMain.handle(IPC.aiProviders, () => detectProviders())
+  ipcMain.handle(IPC.aiModels, async () => {
+    const provider = createActiveProvider()
+    return provider.listModels ? provider.listModels().catch(() => []) : []
+  })
+  ipcMain.handle(IPC.aiHealth, () => checkAIHealth())
+  ipcMain.handle(IPC.aiContext, () => buildContextSummary(getActiveContest()))
+  ipcMain.handle(IPC.aiSuggestions, () => buildSuggestions(getActiveContest()))
+  ipcMain.handle(IPC.aiGenerate, (_e, req: GenerationRequest) =>
+    generateContent(getActiveContest(), req)
+  )
 
   // Backup (M13)
   ipcMain.handle(IPC.backupExport, () => exportBackup())

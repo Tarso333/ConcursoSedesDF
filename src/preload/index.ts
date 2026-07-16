@@ -5,6 +5,7 @@ import type {
   ErrorFilter,
   ErrorType,
   FlashcardInput,
+  GenerationRequest,
   MockAnswerInput,
   MockExamConfig,
   QuestionFilter,
@@ -70,6 +71,17 @@ const api: AppApi = {
   getAiHistory: () => ipcRenderer.invoke(IPC.aiHistory),
   sendAiMessage: (content: string) => ipcRenderer.invoke(IPC.aiSend, content),
   clearAiHistory: () => ipcRenderer.invoke(IPC.aiClear),
+  getAiProviders: () => ipcRenderer.invoke(IPC.aiProviders),
+  getAiModels: () => ipcRenderer.invoke(IPC.aiModels),
+  checkAiHealth: () => ipcRenderer.invoke(IPC.aiHealth),
+  getAiContext: () => ipcRenderer.invoke(IPC.aiContext),
+  getAiSuggestions: () => ipcRenderer.invoke(IPC.aiSuggestions),
+  generateAiContent: (req: GenerationRequest) => ipcRenderer.invoke(IPC.aiGenerate, req),
+  onAiStreamChunk: (cb: (text: string) => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, text: string): void => cb(text)
+    ipcRenderer.on(IPC.aiStreamChunk, listener)
+    return () => ipcRenderer.removeListener(IPC.aiStreamChunk, listener)
+  },
   exportBackup: () => ipcRenderer.invoke(IPC.backupExport),
   importBackup: () => ipcRenderer.invoke(IPC.backupImport)
 }

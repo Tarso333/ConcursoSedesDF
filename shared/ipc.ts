@@ -1,5 +1,10 @@
 // Contrato da ponte IPC (renderer ↔ main). É a fonte da verdade de tipos da fronteira.
 import type {
+  AIContextSummary,
+  AIHealth,
+  AIModelInfo,
+  AIProviderInfo,
+  AISuggestion,
   AiMessageDTO,
   AiStatus,
   AnswerInput,
@@ -23,6 +28,8 @@ import type {
   Flashcard,
   FlashcardInput,
   GamificationProgress,
+  GenerationRequest,
+  GenerationResult,
   LearningAnalytics,
   MockAnswerInput,
   MockExamConfig,
@@ -99,6 +106,14 @@ export const IPC = {
   aiHistory: 'ai:history',
   aiSend: 'ai:send',
   aiClear: 'ai:clear',
+  // AI Platform (M22) — canais aditivos; ai:send permanece retrocompatível.
+  aiProviders: 'ai:providers',
+  aiModels: 'ai:models',
+  aiHealth: 'ai:health',
+  aiContext: 'ai:context',
+  aiSuggestions: 'ai:suggestions',
+  aiGenerate: 'ai:generate',
+  aiStreamChunk: 'ai:streamChunk', // evento main→renderer (chunks de streaming)
   backupExport: 'backup:export',
   backupImport: 'backup:import'
 } as const
@@ -180,6 +195,15 @@ export interface AppApi {
   getAiHistory(): Promise<AiMessageDTO[]>
   sendAiMessage(content: string): Promise<AiMessageDTO>
   clearAiHistory(): Promise<void>
+  // AI Platform (M22)
+  getAiProviders(): Promise<AIProviderInfo[]>
+  getAiModels(): Promise<AIModelInfo[]>
+  checkAiHealth(): Promise<AIHealth>
+  getAiContext(): Promise<AIContextSummary>
+  getAiSuggestions(): Promise<AISuggestion[]>
+  generateAiContent(req: GenerationRequest): Promise<GenerationResult>
+  /** Assina chunks de streaming; retorna o unsubscribe. */
+  onAiStreamChunk(cb: (text: string) => void): () => void
   // Backup (M13)
   exportBackup(): Promise<{ ok: boolean; path?: string; canceled?: boolean }>
   importBackup(): Promise<{ ok: boolean; canceled?: boolean }>

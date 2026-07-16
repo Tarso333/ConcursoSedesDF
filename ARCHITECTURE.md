@@ -2,7 +2,7 @@
 
 > Arquitetura e padrões do app desktop **offline-first**.
 > Decisões registradas em [`DECISIONS.md`](./DECISIONS.md) · Plano em [`ROADMAP.md`](./ROADMAP.md).
-> **Última atualização:** 2026-07-15.
+> **Última atualização:** 2026-07-15 (1.0.0-rc.1).
 
 ---
 
@@ -13,7 +13,7 @@ App **desktop multiplataforma, offline-first, mono-usuário**: uma **plataforma 
 **Padrão Active Contest:** o renderer nunca envia `contestId`; os handlers IPC resolvem o concurso ativo (`settings.active_contest_id`) e o injetam explicitamente nos repositórios/serviços — as camadas de domínio são agnósticas ao concurso.
 
 - Sem servidor, sem nuvem, sem login: **todos os dados vivem localmente em SQLite** no perfil do usuário.
-- A IA (Tutor) é o **único** ponto que pode usar rede (provedor de LLM via chave do usuário); tudo o mais funciona 100% offline.
+- A IA é **opcional e privada por padrão**: o provedor default é o **Ollama local** (sem chave, sem rede externa); provedores remotos (OpenAI/Anthropic/OpenRouter/Gemini CLI) são opt-in. A **AI Platform (M22, ADR-016)** é o único caminho para qualquer LLM — provedores plugáveis atrás de `AIProvider` + registry/factory, contexto fortemente tipado montado pelas engines e Tutor com atribuição determinística de fontes (doc completa em [`AI.md`](./AI.md)). Tudo o mais funciona 100% offline.
 
 ```
 ┌─────────────────────────── Electron ───────────────────────────┐
@@ -62,7 +62,12 @@ ConcursoSedesDF/
 │  │  │  ├─ migrations/           # SQL versionado (drizzle-kit)
 │  │  │  └─ seed/                 # seed do edital (curriculum + questões)
 │  │  ├─ repositories/            # acesso a dados por entidade
-│  │  ├─ services/                # FSRS, planner, estatísticas, IA
+│  │  ├─ services/                # FSRS, planner, estatísticas (aiService =
+│  │  │                           # fachada retrocompat sobre a AI Platform)
+│  │  ├─ ai/                      # AI PLATFORM (M22): AIProvider + registry +
+│  │  │  ├─ providers/            # factory; Ollama (padrão)/OpenAI/Anthropic/
+│  │  │  └─ context/              # Gemini CLI; Context Builder tipado; Tutor
+│  │  │                           # com atribuição; geração via engines (AI.md)
 │  │  └─ ipc/                     # handlers + contrato de canais
 │  ├─ importer/                   # Universal Contest Import Engine (ISOLADO):
 │  │                              # edital PDF → ContestSeed determinístico
@@ -103,6 +108,6 @@ Do usuário (globais): **Settings** (perfil/preferências + concurso ativo) e **
 Detalhe físico em `src/main/db/schema.ts`; lógico no DER em [`DECISIONS.md`](./DECISIONS.md)/ROADMAP.
 
 ## 6. Decisões conscientes (débito conhecido)
-- IA exige chave de provedor (dependência externa) → abstraída atrás de `AiService`; app é 100% útil sem ela.
+- IA não exige mais chave (padrão = Ollama local, M22); provedores remotos são opt-in. Abstraída atrás da AI Platform (`src/main/ai/`); o app é 100% útil sem ela.
 - Empacotamento de instalador (electron-builder) só na fase de hardening.
 - Sincronização/backup em nuvem fora de escopo (offline-first puro); backup = export/import de arquivo.
