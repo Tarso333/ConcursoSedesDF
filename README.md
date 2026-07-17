@@ -27,8 +27,9 @@ O padrão é o **Ollama local** — grátis, offline e sem chave (instale em [ol
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — arquitetura e padrões.
 - [`AI.md`](./AI.md) — AI Platform (provedores, contexto, tutor, geração).
 - [`DECISIONS.md`](./DECISIONS.md) — decisões (ADRs).
-- [`ROADMAP.md`](./ROADMAP.md) — milestones (M0–M22).
+- [`ROADMAP.md`](./ROADMAP.md) — milestones (M0–M23).
 - [`IMPORTER.md`](./IMPORTER.md) — importador universal de editais.
+- [`CONTEUDO.md`](./CONTEUDO.md) — cobertura da base de estudo (385 conhecimentos · 275 questões · 85 flashcards · 153 relações nos 3 concursos) e prioridades da próxima carga.
 - [`STRATEGY.md`](./STRATEGY.md) · [`ANALYTICS.md`](./ANALYTICS.md) · [`GRAPH.md`](./GRAPH.md) — engines.
 - [`PESQUISA.md`](./PESQUISA.md) — inteligência do concurso SEDES.
 

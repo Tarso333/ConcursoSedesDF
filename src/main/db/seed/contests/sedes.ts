@@ -9,6 +9,12 @@ import { SEED_QUESTIONS_BANK } from '../questionsBank'
 import { SEED_QUESTIONS_BANK_2 } from '../questionsBank2'
 import { SEDES_KNOWLEDGE } from './sedesKnowledge'
 import { SEDES_RELATIONS } from './sedesRelations'
+import {
+  SEDES_PACK_DECKS,
+  SEDES_PACK_KNOWLEDGE,
+  SEDES_PACK_QUESTIONS,
+  SEDES_PACK_RELATIONS
+} from './sedesPack'
 
 export const SEDES_CONTEST: ContestSeed = {
   slug: 'sedes-df-2026',
@@ -28,7 +34,8 @@ export const SEDES_CONTEST: ContestSeed = {
     approvalTargetPct: 68
   },
   disciplines: CURRICULUM,
-  questions: [...SEED_QUESTIONS, ...SEED_QUESTIONS_BANK, ...SEED_QUESTIONS_BANK_2],
-  knowledge: SEDES_KNOWLEDGE,
-  relations: SEDES_RELATIONS
+  questions: [...SEED_QUESTIONS, ...SEED_QUESTIONS_BANK, ...SEED_QUESTIONS_BANK_2, ...SEDES_PACK_QUESTIONS],
+  knowledge: [...SEDES_KNOWLEDGE, ...SEDES_PACK_KNOWLEDGE],
+  relations: [...SEDES_RELATIONS, ...SEDES_PACK_RELATIONS],
+  starterDecks: SEDES_PACK_DECKS
 }

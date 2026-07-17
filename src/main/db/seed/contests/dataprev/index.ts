@@ -53,6 +53,7 @@ import { DATAPREV_STARTER_DECKS } from './decks'
 import { DATAPREV_KNOWLEDGE } from './knowledge'
 import { DATAPREV_QUESTIONS } from './questions'
 import { DATAPREV_RELATIONS } from './relations'
+import { DATAPREV_PACK_DECKS, DATAPREV_PACK_QUESTIONS, DATAPREV_PACK_RELATIONS } from './pack'
 
 export const DATAPREV_CONTEST: ContestSeed = {
   slug: 'dataprev-2026',
@@ -73,8 +74,8 @@ export const DATAPREV_CONTEST: ContestSeed = {
     approvalTargetPct: 65
   },
   disciplines: DATAPREV_CURRICULUM,
-  questions: DATAPREV_QUESTIONS,
+  questions: [...DATAPREV_QUESTIONS, ...DATAPREV_PACK_QUESTIONS],
   knowledge: DATAPREV_KNOWLEDGE,
-  relations: DATAPREV_RELATIONS,
-  starterDecks: DATAPREV_STARTER_DECKS
+  relations: [...DATAPREV_RELATIONS, ...DATAPREV_PACK_RELATIONS],
+  starterDecks: [...DATAPREV_STARTER_DECKS, ...DATAPREV_PACK_DECKS]
 }
