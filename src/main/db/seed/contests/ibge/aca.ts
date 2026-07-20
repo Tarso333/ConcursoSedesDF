@@ -22,6 +22,12 @@ import {
   IBGE_SHARED_KNOWLEDGE,
   IBGE_SHARED_QUESTIONS
 } from './shared'
+import {
+  IBGE_EXTRA_DECKS,
+  IBGE_EXTRA_KNOWLEDGE,
+  IBGE_EXTRA_QUESTIONS,
+  IBGE_EXTRA_RELATIONS
+} from './sharedExtra'
 
 const S = 'Banco de estudo (estilo IBFC)'
 const ADM = 'nocoes-administracao'
@@ -393,8 +399,8 @@ export const IBGE_ACA_CONTEST: ContestSeed = {
     approvalTargetPct: 50
   },
   disciplines: [IBGE_LP_DISCIPLINE, IBGE_RLQ_DISCIPLINE, ACA_ADMIN_DISCIPLINE],
-  questions: [...IBGE_SHARED_QUESTIONS, ...ACA_ADMIN_QUESTIONS],
-  knowledge: [...IBGE_SHARED_KNOWLEDGE, ...IBGE_RLQ_KNOWLEDGE, ...ACA_ADMIN_KNOWLEDGE],
-  relations: ACA_RELATIONS,
-  starterDecks: [...IBGE_SHARED_DECKS, ...ACA_ADMIN_DECKS]
+  questions: [...IBGE_SHARED_QUESTIONS, ...IBGE_EXTRA_QUESTIONS, ...ACA_ADMIN_QUESTIONS],
+  knowledge: [...IBGE_SHARED_KNOWLEDGE, ...IBGE_RLQ_KNOWLEDGE, ...IBGE_EXTRA_KNOWLEDGE, ...ACA_ADMIN_KNOWLEDGE],
+  relations: [...ACA_RELATIONS, ...IBGE_EXTRA_RELATIONS],
+  starterDecks: [...IBGE_SHARED_DECKS, ...IBGE_EXTRA_DECKS, ...ACA_ADMIN_DECKS]
 }

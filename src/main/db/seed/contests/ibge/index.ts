@@ -50,6 +50,13 @@ import {
   IBGE_SHARED_QUESTIONS
 } from './shared'
 import { ACS_GAP_DECKS, ACS_GAP_KNOWLEDGE, ACS_GAP_QUESTIONS, ACS_GAP_RELATIONS } from './acsGap'
+import {
+  IBGE_EXTRA_DECKS,
+  IBGE_EXTRA_KNOWLEDGE,
+  IBGE_EXTRA_QUESTIONS,
+  IBGE_EXTRA_RELATIONS
+} from './sharedExtra'
+import { ACS_EXTRA_DECKS, ACS_EXTRA_KNOWLEDGE, ACS_EXTRA_QUESTIONS, ACS_EXTRA_RELATIONS } from './acsExtra'
 
 // Reexporta o contest do ACA (segundo cargo do IBGE) para o registro.
 export { IBGE_ACA_CONTEST } from './aca'
@@ -73,8 +80,21 @@ export const IBGE_CONTEST: ContestSeed = {
     approvalTargetPct: 50
   },
   disciplines: IBGE_CURRICULUM,
-  questions: [...IBGE_QUESTIONS, ...IBGE_SHARED_QUESTIONS, ...ACS_GAP_QUESTIONS],
-  knowledge: [...IBGE_KNOWLEDGE, ...IBGE_SHARED_KNOWLEDGE, ...IBGE_RLQ_KNOWLEDGE, ...ACS_GAP_KNOWLEDGE],
-  relations: [...IBGE_RELATIONS, ...ACS_GAP_RELATIONS],
-  starterDecks: [...IBGE_STARTER_DECKS, ...IBGE_SHARED_DECKS, ...ACS_GAP_DECKS]
+  questions: [
+    ...IBGE_QUESTIONS,
+    ...IBGE_SHARED_QUESTIONS,
+    ...ACS_GAP_QUESTIONS,
+    ...IBGE_EXTRA_QUESTIONS,
+    ...ACS_EXTRA_QUESTIONS
+  ],
+  knowledge: [
+    ...IBGE_KNOWLEDGE,
+    ...IBGE_SHARED_KNOWLEDGE,
+    ...IBGE_RLQ_KNOWLEDGE,
+    ...ACS_GAP_KNOWLEDGE,
+    ...IBGE_EXTRA_KNOWLEDGE,
+    ...ACS_EXTRA_KNOWLEDGE
+  ],
+  relations: [...IBGE_RELATIONS, ...ACS_GAP_RELATIONS, ...IBGE_EXTRA_RELATIONS, ...ACS_EXTRA_RELATIONS],
+  starterDecks: [...IBGE_STARTER_DECKS, ...IBGE_SHARED_DECKS, ...ACS_GAP_DECKS, ...IBGE_EXTRA_DECKS, ...ACS_EXTRA_DECKS]
 }

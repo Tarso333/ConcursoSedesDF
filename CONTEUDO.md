@@ -1,6 +1,6 @@
 # CONTEÚDO — cobertura da base de estudo
 
-> Relatório de cobertura da biblioteca de conteúdo (M25 · IBGE completo: ACS + ACA).
+> Relatório de cobertura da biblioteca de conteúdo (M26 · IBGE premium: 100% dos tópicos cobertos).
 > Gerado com `./node_modules/.bin/electron scripts/content-coverage.cjs`
 > (dev tool **somente leitura** sobre o banco, sem armazenamento paralelo).
 > **Última atualização:** 2026-07-16.
@@ -22,16 +22,35 @@ Idempotência: o conhecimento é semeado **por tópico** (só entra se o tópico
 ainda não tem conteúdo); questões por `seed_key`; decks por nome; relações pela
 tripla. Rodar o seed N vezes não duplica nada.
 
-## Cobertura por concurso (após M25)
+## Cobertura por concurso (após M26)
 
 | Concurso | Tópicos | Cobertura de conhecimento | Knowledge | Questões | Flashcards | Relações |
 |---|---|---|---|---|---|---|
 | **SEDES DF** | 93 | 23% | 112 | 162 | 15 | 36 |
 | **ABGF (E05 TI)** | 180 | 15% | 123 | 75 | 49 | 45 |
 | **DATAPREV (Perfil 2)** | 133 | 26% | 198 | 59 | 50 | 80 |
-| **IBGE — ACS** | 41 | 63% | 90 | 26 | 34 | 11 |
-| **IBGE — ACA** | 32 | 53% | 55 | 18 | 28 | 6 |
-| **Total** | 479 | — | **578** | **340** | **176** | **178** |
+| **IBGE — ACS** | 41 | **100%** | 137 | 38 | 54 | 20 |
+| **IBGE — ACA** | 32 | **100%** | 103 | 27 | 44 | 11 |
+| **Total** | 479 | — | **673** | **361** | **212** | **192** |
+
+### IBGE premium (M26) — todos os tópicos cobertos
+
+Diagnóstico por tópico (script `ibge-diag`) guiou a expansão. **Nenhum tópico
+vazio** nos dois cargos: ACS 41/41 e ACA 32/32 com conhecimento. Cobertura por
+disciplina — todas em 100%:
+
+| Cargo | Disciplina | Tópicos | K | Q | F |
+|---|---|---|---|---|---|
+| ACS | Adm/Situações Gerenciais | 13 | 45 | 12 | 15 |
+| ACS | Conhecimentos Técnicos | 4 | 14 | 4 | 5 |
+| ACS | Língua Portuguesa | 17 | 57 | 14 | 24 |
+| ACS | Raciocínio Lógico Quant. | 7 | 21 | 8 | 10 |
+| ACA | Noções de Administração | 8 | 25 | 12 | 16 |
+| ACA | Língua Portuguesa | 17 | 57 | 9 | 20 |
+| ACA | Raciocínio Lógico Quant. | 7 | 21 | 6 | 8 |
+
+LP e RLQ são compartilhados por slug entre os dois cargos (autorados uma vez).
+Idempotência comprovada: 2º boot → contagens idênticas, zero duplicação.
 
 ### IBGE 2026 — dois cargos (M25)
 
