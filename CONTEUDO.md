@@ -1,6 +1,6 @@
 # CONTEÚDO — cobertura da base de estudo
 
-> Relatório de cobertura da biblioteca de conteúdo (M23 · carga 1).
+> Relatório de cobertura da biblioteca de conteúdo (M24 · IBGE + expansão de Engenharia de Software).
 > Gerado com `./node_modules/.bin/electron scripts/content-coverage.cjs`
 > (dev tool **somente leitura** sobre o banco, sem armazenamento paralelo).
 > **Última atualização:** 2026-07-16.
@@ -22,23 +22,47 @@ Idempotência: o conhecimento é semeado **por tópico** (só entra se o tópico
 ainda não tem conteúdo); questões por `seed_key`; decks por nome; relações pela
 tripla. Rodar o seed N vezes não duplica nada.
 
-## Cobertura por concurso (após a carga 1 de conteúdo)
+## Cobertura por concurso (após M24)
 
 | Concurso | Tópicos | Cobertura de conhecimento | Knowledge | Questões | Flashcards | Relações |
 |---|---|---|---|---|---|---|
 | **SEDES DF** | 93 | 23% | 112 | 162 | 15 | 36 |
-| **ABGF (E05 TI)** | 180 | 11% | 92 | 59 | 28 | 39 |
-| **DATAPREV (Perfil 2)** | 133 | 23% | 181 | 54 | 42 | 78 |
-| **Total** | 406 | — | **385** | **275** | **85** | **153** |
+| **ABGF (E05 TI)** | 180 | 15% | 123 | 75 | 49 | 45 |
+| **DATAPREV (Perfil 2)** | 133 | 26% | 198 | 59 | 50 | 80 |
+| **IBGE (ACS)** | 41 | 32% | 47 | 17 | 17 | 8 |
+| **Total** | 447 | — | **480** | **313** | **131** | **169** |
 
-## Crescimento na carga 1 (M23)
+## IBGE 2026 — Agente Censitário Supervisor (novo concurso, M24)
 
-| Métrica | Antes | Depois | Δ |
+Banca **IBFC**; Edital 01/2026 (retificado); Censo Agropecuário; contratação
+temporária (Lei 8.745/1993); R$ 3.858,00; 40h/sem; prova 60 questões (28–30/09/2026),
+aprovação ≥18 pts e ≥1 pt por disciplina. Disciplinas cadastradas:
+
+| Disciplina | Questões na prova | Cobertura K |
+|---|---|---|
+| Noções de Administração/Situações Gerenciais | 20 | 54% |
+| Conhecimentos Técnicos (Censo) | 15 | 50% |
+| Língua Portuguesa | 15 | 18% |
+| Raciocínio Lógico Quantitativo | 10 | 14% |
+
+## Crescimento
+
+**Carga 1 (M23):** +77 conhecimentos, +29 questões, +35 flashcards, +10 relações.
+
+**M24 (IBGE + expansão de Engenharia de Software):**
+
+| Métrica | Antes (M23) | Depois (M24) | Δ |
 |---|---|---|---|
-| knowledge_entries | 308 | 385 | **+77** |
-| questions | 246 | 275 | **+29** |
-| flashcards | 50 | 85 | **+35** |
-| topic_relations | 143 | 153 | **+10** |
+| knowledge_entries | 385 | 480 | **+95** |
+| questions | 275 | 313 | **+38** |
+| flashcards | 85 | 131 | **+46** |
+| topic_relations | 153 | 169 | **+16** |
+
+Destaques M24: novo concurso **IBGE ACS** (47 K · 17 Q · 17 F · 8 R) e a
+disciplina **Engenharia de Software** praticamente completada na ABGF (0%→
+todos os tópicos técnicos cobertos: SDLC, padrões, DDD, microsserviços, APIs,
+APF, fundamentos de linguagens) e reforçada na DATAPREV (ciclo de vida,
+metodologias, qualidade, requisitos, análise/projeto OO).
 
 Destaques: **o SEDES saiu de 0 para 15 flashcards** (antes não tinha nenhum) e
 teve a cobertura de conhecimento dobrada (11% → 23%); o **ABGF** ganhou os

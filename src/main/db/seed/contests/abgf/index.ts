@@ -39,6 +39,12 @@ import {
   ABGF_PACK_QUESTIONS,
   ABGF_PACK_RELATIONS
 } from './pack'
+import {
+  ABGF_ES_DECKS,
+  ABGF_ES_KNOWLEDGE,
+  ABGF_ES_QUESTIONS,
+  ABGF_ES_RELATIONS
+} from './engSoftwarePack'
 
 export const ABGF_CONTEST: ContestSeed = {
   slug: 'abgf-2026',
@@ -59,8 +65,8 @@ export const ABGF_CONTEST: ContestSeed = {
     approvalTargetPct: 65
   },
   disciplines: ABGF_CURRICULUM,
-  questions: [...ABGF_QUESTIONS, ...ABGF_PACK_QUESTIONS],
-  knowledge: [...ABGF_KNOWLEDGE, ...ABGF_PACK_KNOWLEDGE],
-  relations: [...ABGF_RELATIONS, ...ABGF_PACK_RELATIONS],
-  starterDecks: [...ABGF_STARTER_DECKS, ...ABGF_PACK_DECKS]
+  questions: [...ABGF_QUESTIONS, ...ABGF_PACK_QUESTIONS, ...ABGF_ES_QUESTIONS],
+  knowledge: [...ABGF_KNOWLEDGE, ...ABGF_PACK_KNOWLEDGE, ...ABGF_ES_KNOWLEDGE],
+  relations: [...ABGF_RELATIONS, ...ABGF_PACK_RELATIONS, ...ABGF_ES_RELATIONS],
+  starterDecks: [...ABGF_STARTER_DECKS, ...ABGF_PACK_DECKS, ...ABGF_ES_DECKS]
 }
