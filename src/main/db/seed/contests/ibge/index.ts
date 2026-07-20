@@ -43,6 +43,16 @@ import { IBGE_STARTER_DECKS } from './decks'
 import { IBGE_KNOWLEDGE } from './knowledge'
 import { IBGE_QUESTIONS } from './questions'
 import { IBGE_RELATIONS } from './relations'
+import {
+  IBGE_RLQ_KNOWLEDGE,
+  IBGE_SHARED_DECKS,
+  IBGE_SHARED_KNOWLEDGE,
+  IBGE_SHARED_QUESTIONS
+} from './shared'
+import { ACS_GAP_DECKS, ACS_GAP_KNOWLEDGE, ACS_GAP_QUESTIONS, ACS_GAP_RELATIONS } from './acsGap'
+
+// Reexporta o contest do ACA (segundo cargo do IBGE) para o registro.
+export { IBGE_ACA_CONTEST } from './aca'
 
 export const IBGE_CONTEST: ContestSeed = {
   slug: 'ibge-2026',
@@ -63,8 +73,8 @@ export const IBGE_CONTEST: ContestSeed = {
     approvalTargetPct: 50
   },
   disciplines: IBGE_CURRICULUM,
-  questions: IBGE_QUESTIONS,
-  knowledge: IBGE_KNOWLEDGE,
-  relations: IBGE_RELATIONS,
-  starterDecks: IBGE_STARTER_DECKS
+  questions: [...IBGE_QUESTIONS, ...IBGE_SHARED_QUESTIONS, ...ACS_GAP_QUESTIONS],
+  knowledge: [...IBGE_KNOWLEDGE, ...IBGE_SHARED_KNOWLEDGE, ...IBGE_RLQ_KNOWLEDGE, ...ACS_GAP_KNOWLEDGE],
+  relations: [...IBGE_RELATIONS, ...ACS_GAP_RELATIONS],
+  starterDecks: [...IBGE_STARTER_DECKS, ...IBGE_SHARED_DECKS, ...ACS_GAP_DECKS]
 }

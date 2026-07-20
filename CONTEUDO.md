@@ -1,6 +1,6 @@
 # CONTEÚDO — cobertura da base de estudo
 
-> Relatório de cobertura da biblioteca de conteúdo (M24 · IBGE + expansão de Engenharia de Software).
+> Relatório de cobertura da biblioteca de conteúdo (M25 · IBGE completo: ACS + ACA).
 > Gerado com `./node_modules/.bin/electron scripts/content-coverage.cjs`
 > (dev tool **somente leitura** sobre o banco, sem armazenamento paralelo).
 > **Última atualização:** 2026-07-16.
@@ -22,15 +22,35 @@ Idempotência: o conhecimento é semeado **por tópico** (só entra se o tópico
 ainda não tem conteúdo); questões por `seed_key`; decks por nome; relações pela
 tripla. Rodar o seed N vezes não duplica nada.
 
-## Cobertura por concurso (após M24)
+## Cobertura por concurso (após M25)
 
 | Concurso | Tópicos | Cobertura de conhecimento | Knowledge | Questões | Flashcards | Relações |
 |---|---|---|---|---|---|---|
 | **SEDES DF** | 93 | 23% | 112 | 162 | 15 | 36 |
 | **ABGF (E05 TI)** | 180 | 15% | 123 | 75 | 49 | 45 |
 | **DATAPREV (Perfil 2)** | 133 | 26% | 198 | 59 | 50 | 80 |
-| **IBGE (ACS)** | 41 | 32% | 47 | 17 | 17 | 8 |
-| **Total** | 447 | — | **480** | **313** | **131** | **169** |
+| **IBGE — ACS** | 41 | 63% | 90 | 26 | 34 | 11 |
+| **IBGE — ACA** | 32 | 53% | 55 | 18 | 28 | 6 |
+| **Total** | 479 | — | **578** | **340** | **176** | **178** |
+
+### IBGE 2026 — dois cargos (M25)
+
+Modelado como **dois contests** (mesmo padrão ABGF/DATAPREV: um contest por
+cargo, pois ACS e ACA têm provas diferentes). **Língua Portuguesa e Raciocínio
+Lógico Quantitativo são idênticos no Anexo IV** → autorados uma vez e
+compartilhados por slug (`lingua-portuguesa`/`raciocinio-logico`), com o fator
+multiConcurso (M16) ativo automaticamente.
+
+| Cargo | Bloco específico | Cobertura do específico |
+|---|---|---|
+| **ACS** (Supervisor) | Adm/Situações Gerenciais 20q + Conhecimentos Técnicos 15q | 69% / **100%** |
+| **ACA** (Administrativo) | Noções de Administração 35q | **100%** |
+
+Decisão documentada: o conhecimento é anexado ao **tópico-pai** (ex.: a
+"Significação das palavras" cobre sinônimos/antônimos/homônimos/parônimos no
+próprio corpo), evitando duplicar entradas em cada subtópico-folha — por isso a
+cobertura por tópico-folha da RLQ/LP fica abaixo de 100% sem que haja lacuna de
+conteúdo.
 
 ## IBGE 2026 — Agente Censitário Supervisor (novo concurso, M24)
 
@@ -49,14 +69,21 @@ aprovação ≥18 pts e ≥1 pt por disciplina. Disciplinas cadastradas:
 
 **Carga 1 (M23):** +77 conhecimentos, +29 questões, +35 flashcards, +10 relações.
 
-**M24 (IBGE + expansão de Engenharia de Software):**
+**M24 (IBGE ACS + expansão de Engenharia de Software):** +95 conhecimentos, +38 questões, +46 flashcards, +16 relações.
 
-| Métrica | Antes (M23) | Depois (M24) | Δ |
+**M25 (IBGE completo — cargo ACA + completude do ACS):**
+
+| Métrica | Antes (M24) | Depois (M25) | Δ |
 |---|---|---|---|
-| knowledge_entries | 385 | 480 | **+95** |
-| questions | 275 | 313 | **+38** |
-| flashcards | 85 | 131 | **+46** |
-| topic_relations | 153 | 169 | **+16** |
+| knowledge_entries | 480 | 578 | **+98** |
+| questions | 313 | 340 | **+27** |
+| flashcards | 131 | 176 | **+45** |
+| topic_relations | 169 | 178 | **+9** |
+
+Destaque M25: **IBGE agora cobre os dois cargos (ACS e ACA)** de ponta a ponta
+nos blocos específicos (Adm/Situações Gerenciais, Conhecimentos Técnicos,
+Noções de Administração — 69–100%) e completa Português/RLQ compartilhados.
+5 concursos ativos na plataforma.
 
 Destaques M24: novo concurso **IBGE ACS** (47 K · 17 Q · 17 F · 8 R) e a
 disciplina **Engenharia de Software** praticamente completada na ABGF (0%→
