@@ -57,6 +57,9 @@ import {
   IBGE_EXTRA_RELATIONS
 } from './sharedExtra'
 import { ACS_EXTRA_DECKS, ACS_EXTRA_KNOWLEDGE, ACS_EXTRA_QUESTIONS, ACS_EXTRA_RELATIONS } from './acsExtra'
+import { IBGE_BANK_SHARED_QUESTIONS } from './bankShared'
+import { IBGE_BANK_ACS_QUESTIONS } from './bankAcs'
+import { IBGE_BANK_ACS_DECKS, IBGE_BANK_SHARED_DECKS } from './bankFlashcards'
 
 // Reexporta o contest do ACA (segundo cargo do IBGE) para o registro.
 export { IBGE_ACA_CONTEST } from './aca'
@@ -85,7 +88,9 @@ export const IBGE_CONTEST: ContestSeed = {
     ...IBGE_SHARED_QUESTIONS,
     ...ACS_GAP_QUESTIONS,
     ...IBGE_EXTRA_QUESTIONS,
-    ...ACS_EXTRA_QUESTIONS
+    ...ACS_EXTRA_QUESTIONS,
+    ...IBGE_BANK_SHARED_QUESTIONS,
+    ...IBGE_BANK_ACS_QUESTIONS
   ],
   knowledge: [
     ...IBGE_KNOWLEDGE,
@@ -96,5 +101,13 @@ export const IBGE_CONTEST: ContestSeed = {
     ...ACS_EXTRA_KNOWLEDGE
   ],
   relations: [...IBGE_RELATIONS, ...ACS_GAP_RELATIONS, ...IBGE_EXTRA_RELATIONS, ...ACS_EXTRA_RELATIONS],
-  starterDecks: [...IBGE_STARTER_DECKS, ...IBGE_SHARED_DECKS, ...ACS_GAP_DECKS, ...IBGE_EXTRA_DECKS, ...ACS_EXTRA_DECKS]
+  starterDecks: [
+    ...IBGE_STARTER_DECKS,
+    ...IBGE_SHARED_DECKS,
+    ...ACS_GAP_DECKS,
+    ...IBGE_EXTRA_DECKS,
+    ...ACS_EXTRA_DECKS,
+    ...IBGE_BANK_SHARED_DECKS,
+    ...IBGE_BANK_ACS_DECKS
+  ]
 }
