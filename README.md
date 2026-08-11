@@ -24,6 +24,7 @@ Electron · React · TypeScript · Vite (electron-vite) · Tailwind · Zustand �
 O padrão é o **Ollama local** — grátis, offline e sem chave (instale em [ollama.com](https://ollama.com) e rode `ollama pull llama3.2:3b`). Alternativas: OpenAI, Anthropic, OpenRouter, Gemini CLI ou endpoint custom — em **Configurações → Inteligência Artificial**. O app inteiro funciona sem IA.
 
 ## Documentação
+- [`INSTALL.md`](./INSTALL.md) — instalação do zero (usuário final e desenvolvimento) e problemas conhecidos.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — arquitetura e padrões.
 - [`AI.md`](./AI.md) — AI Platform (provedores, contexto, tutor, geração).
 - [`DECISIONS.md`](./DECISIONS.md) — decisões (ADRs).

@@ -8,7 +8,10 @@
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
+    "fix:wincodesign": "node scripts/fix-wincodesign.cjs",
+    "prebuild": "npm run fix:wincodesign",
     "build": "electron-vite build && electron-builder",
+    "prebuild:dir": "npm run fix:wincodesign",
     "build:dir": "electron-vite build && electron-builder --dir",
     "compile": "electron-vite build",
     "start": "electron-vite preview",
