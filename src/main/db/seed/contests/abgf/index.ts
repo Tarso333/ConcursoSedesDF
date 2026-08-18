@@ -47,6 +47,7 @@ import {
 } from './engSoftwarePack'
 import { ABGF_BANK_ESPECIFICAS } from './bankEspecificas'
 import { ABGF_BANK_ESPECIFICAS2 } from './bankEspecificas2'
+import { ABGF_BANK_ESPECIFICAS3 } from './bankEspecificas3'
 import { ABGF_BANK_GERAIS } from './bankGerais'
 import { ABGF_BANK_KNOWLEDGE } from './bankKnowledge'
 import { ABGF_BANK_DECKS } from './bankFlashcards'
@@ -76,6 +77,7 @@ export const ABGF_CONTEST: ContestSeed = {
     ...ABGF_ES_QUESTIONS,
     ...ABGF_BANK_ESPECIFICAS,
     ...ABGF_BANK_ESPECIFICAS2,
+    ...ABGF_BANK_ESPECIFICAS3,
     ...ABGF_BANK_GERAIS
   ],
   knowledge: [...ABGF_KNOWLEDGE, ...ABGF_PACK_KNOWLEDGE, ...ABGF_ES_KNOWLEDGE, ...ABGF_BANK_KNOWLEDGE],
